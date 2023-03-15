@@ -1,6 +1,6 @@
 {
   "name": "sponge-chatgpt",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "description": "uwu chatgpt",
   "main": "index.js",
   "type": "module",
