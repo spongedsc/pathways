@@ -72,9 +72,6 @@ client.on("message", async message => {
         parentMessageId: parentid
       });
 
-      console.log(res);
-
-
 
 
       if (res.text.includes(`@everyone`)) {
