@@ -80,6 +80,16 @@ client.on("message", async message => {
         return message.channel.send(`**[FILTERED]**`);
       }
 
+      // Reset if OpenAI activates safety filter
+      if (res.text.includes('can\'t') || res.text.includes('a language model') || res.text.includes('cannot engage') || res.text.includes('inappropriate')) {
+        conversation.conversationId = "";
+        conversation.parentMessageId = "";
+        message.channel.send(res.text);
+        message.channel.send(":warning: Character break detected. Conversation reset.");
+        message.channel.stopTyping();
+        return;
+      }
+
       message.channel.send(`${res.text}`);
       conversation.conversationId = res.conversationId;
       conversation.parentMessageId = res.parentMessageId;
