@@ -86,8 +86,9 @@ client.on("message", async message => {
       if (res.text.includes('can\'t') || res.text.includes('language model') || res.text.includes('cannot engage') || res.text.includes('inappropriate')) {
         conversation.conversationId = "";
         conversation.parentMessageId = "";
-        message.channel.send(res.text);
-        message.channel.send(":warning: Character break detected. Conversation reset.");
+        message.channel.send(res.text).then(function (message) {
+          message.react("⚠️");
+        })
         message.channel.stopTyping();
         return;
       }
