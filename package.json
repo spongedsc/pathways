@@ -1,7 +1,7 @@
 {
-  "name": "sponge-chatgpt",
+  "name": "spongegpt",
   "version": "1.3.2",
-  "description": "uwu chatgpt",
+  "description": "chatgpt but in discord and bad",
   "main": "index.js",
   "type": "module",
   "scripts": {

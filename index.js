@@ -27,9 +27,6 @@ const api = new ChatGPTUnofficialProxyAPI({
   accessToken: token,
 })
 
-
-
-
 client.on("message", async message => {
 
   if (message.channel.id == process.env.CHANNELID) {
