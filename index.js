@@ -100,7 +100,7 @@ client.on("message", async message => {
     } catch (error) {
       console.log(error)
       message.channel.stopTyping();
-      return message.channel.send(`Error\n\`${error}\``);
+      return message.channel.send(`\`${error}\``);
     }
 
   }
