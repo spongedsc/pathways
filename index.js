@@ -2,14 +2,7 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import Discord from 'discord.js'
-import { ChatGPTUnofficialProxyAPI } from 'chatgpt'
-import Authenticator from 'openai-token'
-const auth = new Authenticator(process.env.OPENAI_USER, process.env.OPENAI_PASS)
-
-console.log("Getting ChatGPT access token...")
-await auth.begin()
-const token = await auth.getAccessToken()
-console.log("Access token obtained!")
+import { ChatGPTAPI } from 'chatgpt'
 
 const client = new Discord.Client();
 client.login(process.env.DISCORD);
@@ -23,8 +16,8 @@ let conversation = {
   parentMessageId: null
 };
 
-const api = new ChatGPTUnofficialProxyAPI({
-  accessToken: token,
+const api = new ChatGPTAPI({
+  apiKey: process.env.OPENAI_API_KEY
 })
 
 client.on("message", async message => {
