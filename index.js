@@ -7,7 +7,7 @@ import { ChatGPTAPI } from 'chatgpt'
 const client = new Discord.Client();
 client.login(process.env.DISCORD);
 client.on("ready", () => {
-  console.log(`SpongeAss has started.`);
+  console.log(`Ready! Logged in as ${client.user.tag}`);
   client.user.setActivity(`uwu`);
 });
 
