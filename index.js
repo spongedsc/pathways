@@ -90,6 +90,7 @@ client.on("message", async message => {
       if (res.text.length >= 2000) {
         fs.writeFileSync(path.resolve('./how.txt'), res.text);
         message.channel.send('how', { files: ["./how.txt"] });
+        return;
       }
 
 
