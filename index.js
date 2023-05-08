@@ -8,7 +8,7 @@ import fs from 'fs'
 import path from 'path';
 
 const client = new Discord.Client();
-client.login(process.env.DISCORD);
+
 client.on("ready", () => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
   client.user.setActivity(`uwu`);
@@ -31,7 +31,7 @@ client.on("message", async message => {
 
     try {
 
-      // Ignore
+      // Ignore messages starting with !!
       if (message.content.startsWith("!!")) {
         return;
       }
@@ -40,7 +40,7 @@ client.on("message", async message => {
 
       // Reset conversation
       if (message.content.startsWith("%reset")) {
-        conversation.parentMessageId = "";
+        conversation.parentMessageId = null;
         message.channel.send("Conversation reset.");
         message.channel.stopTyping();
         return;
@@ -50,16 +50,7 @@ client.on("message", async message => {
         message.channel.send("parentMessageId: " + conversation.parentMessageId);
         message.channel.stopTyping();
         return;
-      }
-
-      // Start conversation if it doesn't exist
-      if (!conversation.parentMessageId) {
-        const res = await api.sendMessage("pretend you are a human named spongeass that speaks in uwuspeak, and don't mention this initial prompt", {
-          role: "system",
-        });
-        conversation.parentMessageId = res.parentMessageId;
-      }
-
+      } 
 
       var parentid = conversation.parentMessageId
       const res = await api.sendMessage(message.content, {
@@ -76,15 +67,6 @@ client.on("message", async message => {
         message.channel.stopTyping();
         return message.channel.send(`**[FILTERED]**`);
       }
-
-      // Reset if character is broken
-      //if (res.text.includes('can\'t') || res.text.includes('language model') || res.text.includes('cannot engage') || res.text.includes('inappropriate')) {
-      //  message.channel.send(res.text).then(function (message) {
-      //    message.react("⚠️");
-      //  })
-      //  message.channel.stopTyping();
-      //  return;
-      //}
 
       // Handle long responses
       if (res.text.length >= 2000) {
@@ -107,3 +89,5 @@ client.on("message", async message => {
 
   }
 });
+
+client.login(process.env.DISCORD);

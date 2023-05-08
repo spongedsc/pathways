@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "chatgpt but in discord and bad",
   "main": "index.js",
   "type": "module",
