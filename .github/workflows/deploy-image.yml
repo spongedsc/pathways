@@ -3,7 +3,7 @@ name: Build and push Docker image to GitHub Container Registry
 on: 
   push:
     branches:
-    - "main" # Runs only when pushing to the main branch
+    - "master" # Runs only when pushing to the master branch
 
 jobs:
   build-and-publish-latest:
