@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/puppeteer/puppeteer:latest
+FROM node:20-alpine
 ENV NODE_ENV=production
 
 WORKDIR /app
