@@ -3,12 +3,14 @@
 FROM ghcr.io/puppeteer/puppeteer:latest
 ENV NODE_ENV=production
 
-WORKDIR /app
+WORKDIR /home/pptruser/
 
 COPY ["package.json", "package-lock.json*", "./"]
 
-RUN npm install --production
+USER root
+RUN npm install --omit=dev
 
 COPY . .
 
+USER pptruser
 CMD ["node", "index.js"]
