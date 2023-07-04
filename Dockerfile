@@ -4,6 +4,7 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
 FROM node:20-alpine
+FROM node:20-alpine
 ENV NODE_ENV=production
 
 # Install Google Chrome Stable and fonts
