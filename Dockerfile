@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:18 AS app
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
