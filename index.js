@@ -163,9 +163,11 @@ client.on("message", async message => {
 
       }
 
-      let res = "";
+      let res;
       if (localAIenabled) {
-        res.text = await sendChat(message.content, history);
+        let chatResponse = await sendChat(message.content, history);
+
+        res = { text: chatResponse };
       } else {
         res = await api.sendMessage(message.content, {
           parentMessageId: conversation.parentMessageId
