@@ -1,9 +1,10 @@
-name: Deploy Docker Image to GHCR
+name: Deploy Beta Docker Image to GHCR
 
 on:
   push:
     branches:
-      - main
+      - beta
+      - staging
   workflow_dispatch:
 
 jobs:
@@ -26,5 +27,5 @@ jobs:
 
           - name: 'Build & Publish Docker Image'
             run: |
-              docker build . --tag "ghcr.io/${REPO}:latest"
-              docker push "ghcr.io/${REPO}:latest"
+              docker build . --tag "ghcr.io/${REPO}:beta"
+              docker push "ghcr.io/${REPO}:beta"
