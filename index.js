@@ -108,23 +108,23 @@ setInterval(async () => {
   try {
     const silly = await sendChat('ping!', history);
     if (silly) {
-      console.log(`Local AI is enabled.`);
+      console.log(`\nSelfhosted AI is enabled.\n`);
       localAIenabled = true;
     } else {
-      console.log(`Cannot access local AI: Falling back to OpenAI API`);
+      console.log(`\nCannot access local AI: Falling back to OpenAI API\n`);
       localAIenabled = false;
     }
   }
   catch (error) {
-    console.log(`Cannot access local AI: Falling back to OpenAI API`);
-    console.log(error);
+    console.log(`\nCannot access local AI: Falling back to OpenAI API\n`);
+    console.log(error.message);
     localAIenabled = false;
   }
   if (localAIenabledprev != localAIenabled) {
     if (localAIenabled) {
-      client.channels.cache.get(process.env.CHANNELID).send("SpongeGPT V2 connected!");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT V2 connected!");
     } else {
-      client.channels.cache.get(process.env.CHANNELID).send("SpongeGPT V2 disconnected, now using ChatGPT.");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT V2 disconnected, now using ChatGPT.");
     }
   }
 }, 60000);
@@ -136,19 +136,6 @@ client.on("message", async message => {
     if (!message.content) return;
 
     try {
-      // Check which AI service to use
-      try {
-        const silly = await sendChat('ping!', history);
-        if (silly) {
-          console.log(`Local AI is enabled.`);
-          localAIenabled = true;
-        }
-      }
-      catch (error) {
-        console.log(`Cannot access local AI: Falling back to OpenAI API`);
-        console.log(error);
-        localAIenabled = false;
-      }
 
       // Ignore messages starting with !!
       if (message.content.startsWith("!!")) {
