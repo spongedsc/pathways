@@ -21,17 +21,11 @@ let conversation = {
   parentMessageId: null
 };
 
-const api = new ChatGPTAPI({
-  apiKey: process.env.OPENAI_API_KEY
-})
-
-
-// For local streaming, the websockets are hosted without ssl - http://
-const URI = `https://ai.arti.lol/api/v1/chat`;
 let history = { internal: [], visible: [] };
 
-// For reverse-proxied streaming, the remote will likely host with ssl - https://
-// const URI = 'https://your-uri-here.trycloudflare.com/api/v1/chat';
+const api = new ChatGPTAPI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 async function sendChat(userInput, history) {
   const request = {
@@ -92,7 +86,7 @@ async function sendChat(userInput, history) {
   };
 
   try {
-    const response = await axios.post(URI, request);
+    const response = await axios.post(process.env.LOCAL_AI_URL, request);
 
     if (response.status === 200) {
       const result = response.data.results[0].history;
@@ -106,12 +100,34 @@ async function sendChat(userInput, history) {
   }
 }
 
-// Basic example
+let localAIenabled = false;
 
-// "Continue" example. Make sure to set '_continue' to true above
-// const arr = [userInput, 'Surely, here is'];
-// const history = { internal: [arr], visible: [arr] };
-
+// Check every minute if the local AI is enabled
+setInterval(async () => {
+  let localAIenabledprev = localAIenabled;
+  try {
+    const silly = await sendChat('ping!', history);
+    if (silly) {
+      console.log(`Local AI is enabled.`);
+      localAIenabled = true;
+    } else {
+      console.log(`Cannot access local AI: Falling back to OpenAI API`);
+      localAIenabled = false;
+    }
+  }
+  catch (error) {
+    console.log(`Cannot access local AI: Falling back to OpenAI API`);
+    console.log(error);
+    localAIenabled = false;
+  }
+  if (localAIenabledprev != localAIenabled) {
+    if (localAIenabled) {
+      client.channels.cache.get(process.env.CHANNELID).send("SpongeGPT V2 connected!");
+    } else {
+      client.channels.cache.get(process.env.CHANNELID).send("SpongeGPT V2 disconnected, now using ChatGPT.");
+    }
+  }
+}, 60000);
 
 client.on("message", async message => {
 
@@ -120,6 +136,19 @@ client.on("message", async message => {
     if (!message.content) return;
 
     try {
+      // Check which AI service to use
+      try {
+        const silly = await sendChat('ping!', history);
+        if (silly) {
+          console.log(`Local AI is enabled.`);
+          localAIenabled = true;
+        }
+      }
+      catch (error) {
+        console.log(`Cannot access local AI: Falling back to OpenAI API`);
+        console.log(error);
+        localAIenabled = false;
+      }
 
       // Ignore messages starting with !!
       if (message.content.startsWith("!!")) {
@@ -130,6 +159,10 @@ client.on("message", async message => {
 
       // Reset conversation
       if (message.content.startsWith("%reset")) {
+        if (localAIenabled) {
+          message.channel.send("Conversation history is not yet implemented for SpongeGPT V2.");
+          return;
+        }
         conversation.parentMessageId = null;
         message.channel.send("Conversation reset.");
         message.channel.stopTyping();
@@ -140,31 +173,40 @@ client.on("message", async message => {
         message.channel.send("parentMessageId: " + conversation.parentMessageId);
         message.channel.stopTyping();
         return;
+
       }
 
-      let res = await sendChat(message.content, history);
+      let res = "";
+      if (localAIenabled) {
+        res.text = await sendChat(message.content, history);
+      } else {
+        res = await api.sendMessage(message.content, {
+          parentMessageId: conversation.parentMessageId
+        });
+      }
 
 
       // Filter @everyone and @here
-      if (res.includes(`@everyone`)) {
+      if (res.text.includes(`@everyone`)) {
         message.channel.stopTyping();
         return message.channel.send(`**[FILTERED]**`);
       }
-      if (res.includes(`@here`)) {
+      if (res.text.includes(`@here`)) {
         message.channel.stopTyping();
         return message.channel.send(`**[FILTERED]**`);
       }
 
       // Handle long responses
-      if (res.length >= 2000) {
-        fs.writeFileSync(path.resolve('./how.txt'), res);
+      if (res.text.length >= 2000) {
+        fs.writeFileSync(path.resolve('./how.txt'), res.text);
         message.channel.send('', { files: ["./how.txt"] });
         message.channel.stopTyping();
         return;
       }
 
 
-      message.channel.send(`${res}`);
+      message.channel.send(`${res.text}`);
+      if (!localAIenabled) conversation.parentMessageId = res.parentMessageId;
       message.channel.stopTyping();
 
     } catch (error) {
