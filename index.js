@@ -34,21 +34,32 @@ async function sendChat(userInput, history) {
     auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
-    mode: 'chat',
+    mode: 'chat', // Valid options: 'chat', 'chat-instruct', 'instruct'
     character: 'SpongeAss',
+    instruction_template: null, // Will get autodetected if unset
     your_name: 'discord user',
+    // 'name1': 'name of user', // Optional
+    // 'name2': 'name of character', // Optional
+    // 'context': 'character context', // Optional
+    // 'greeting': 'greeting', // Optional
+    // 'name1_instruct': 'You', // Optional
+    // 'name2_instruct': 'Assistant', // Optional
+    // 'context_instruct': 'context_instruct', // Optional
+    // 'turn_template': 'turn_template', // Optional
     regenerate: false,
     _continue: false,
     chat_instruct_command:
       'Continue the chat dialogue below. Write a single reply for the character "".\n\n',
 
+    // Generation params. If 'preset' is set to different than 'None', the values
+    // in presets/preset-name.yaml are used instead of the individual numbers.
     preset: 'None',
     do_sample: true,
     temperature: 1, // set to 1 for extra fun!!! weeeee (0.7 is default)
     top_p: 0.1,
     typical_p: 1,
-    epsilon_cutoff: 0,
-    eta_cutoff: 0,
+    epsilon_cutoff: 0, // In units of 1e-4
+    eta_cutoff: 0, // In units of 1e-4
     tfs: 1,
     top_a: 0,
     repetition_penalty: 1.18,
@@ -91,42 +102,24 @@ async function sendChat(userInput, history) {
 
 let localAIenabled = false;
 
-async function makeRequest() {
-  try {
-    const response = await axios.get(process.env.LOCAL_AI_URL);
-
-    if (response.status === 200) {
-      localAIenabled = true;
-      console.log(`\nSelfhosted AI is enabled.\n`);
-    }
-  } catch (error) {
-    if (error.response.status === 404) {
-      localAIenabled = true;
-      console.log(`\nSelfhosted AI is enabled.\n`);
-      return;
-    };
-    console.log(`\nCannot access local AI: Falling back to OpenAI API (non 404 code)\n`);
-    localAIenabled = false;
-  }
-};
-
 // Check every minute if the local AI is enabled
 setInterval(async () => {
   let localAIenabledprev = localAIenabled;
-
-  // Set a 20-second timeout
-  const timeoutId = setTimeout(() => {
+  try {
+    const silly = await sendChat('ping!', history);
+    if (silly) {
+      console.log(`\nSelfhosted AI is enabled.\n`);
+      localAIenabled = true;
+    } else {
+      console.log(`\nCannot access local AI: Falling back to OpenAI API\n`);
+      localAIenabled = false;
+    }
+  }
+  catch (error) {
+    console.log(`\nCannot access local AI: Falling back to OpenAI API\n`);
+    console.log(error.message);
     localAIenabled = false;
-    console.log(`\nCannot access local AI: Falling back to OpenAI API (timeout)\n`);
-  }, 20000);
-
-  makeRequest()
-    .then(() => {
-      clearTimeout(timeoutId);
-    })
-    .catch((error) => {
-      console.error('Error in makeRequest:', error);
-    });
+  }
   if (localAIenabledprev != localAIenabled) {
     if (localAIenabled) {
       client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT V2 connected!");
