@@ -35,7 +35,7 @@ async function sendChat(userInput, history) {
     max_tokens_second: 0,
     history: history,
     mode: 'chat',
-    character: 'SpongeAss',
+    character: 'SpongeAss2',
     your_name: 'discord user',
     regenerate: false,
     _continue: false,
