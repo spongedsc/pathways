@@ -31,7 +31,7 @@ const api = new ChatGPTAPI({
 async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
-    max_new_tokens: 1000,
+    max_new_tokens: 500,
     auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
