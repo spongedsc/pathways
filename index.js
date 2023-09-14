@@ -32,7 +32,7 @@ async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
     max_new_tokens: 1000,
-    auto_max_new_tokens: true,
+    auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
     mode: 'chat',
