@@ -129,9 +129,9 @@ setInterval(async () => {
     });
   if (localAIenabledprev != localAIenabled) {
     if (localAIenabled) {
-      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT V2 connected!");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT connected!");
     } else {
-      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT V2 disconnected, now using ChatGPT.");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT disconnected, now using ChatGPT.");
     }
   }
 }, 60000);
