@@ -12,9 +12,10 @@ import { decode } from 'html-entities';
 
 const client = new Discord.Client();
 
-client.on("ready", () => {
+client.on("ready", async () => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
   client.user.setActivity(`uwu`);
+  await client.channels.fetch(process.env.CHANNELID);
 });
 
 let conversation = {
@@ -31,7 +32,7 @@ async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
     max_new_tokens: 1000,
-    auto_max_new_tokens: false,
+    auto_max_new_tokens: true,
     max_tokens_second: 0,
     history: history,
     mode: 'chat',
@@ -80,8 +81,10 @@ async function sendChat(userInput, history) {
     if (response.status === 200) {
       const result = response.data.results[0].history;
 
-      console.log(JSON.stringify(result, null, 4));
-      console.log(decode(result.visible[result.visible.length - 1][1]));
+      // Combine the existing history with the new visibleHistory
+      history.internal = result.internal;
+      history.visible = result.visible;
+
       return decode(result.visible[result.visible.length - 1][1]);
     }
   } catch (error) {
@@ -97,12 +100,10 @@ async function makeRequest() {
 
     if (response.status === 200) {
       localAIenabled = true;
-      console.log(`\nSelfhosted AI is enabled.\n`);
     }
   } catch (error) {
     if (error.response.status === 404) {
       localAIenabled = true;
-      console.log(`\nSelfhosted AI is enabled.\n`);
       return;
     };
     console.log(`\nCannot access local AI: Falling back to OpenAI API (non 404 code)\n`);
@@ -110,8 +111,8 @@ async function makeRequest() {
   }
 };
 
-// Check every minute if the local AI is enabled
-setInterval(async () => {
+
+async function checkLocalAI() {
   let localAIenabledprev = localAIenabled;
 
   // Set a 20-second timeout
@@ -134,6 +135,13 @@ setInterval(async () => {
       client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT disconnected, now using ChatGPT.");
     }
   }
+}
+
+checkLocalAI();
+
+// Check every minute if the local AI is enabled
+setInterval(async () => {
+  checkLocalAI();
 }, 60000);
 
 client.on("message", async message => {
@@ -154,8 +162,9 @@ client.on("message", async message => {
       // Reset conversation
       if (message.content.startsWith("%reset")) {
         if (localAIenabled) {
-          message.channel.send("Conversation history is not yet implemented for SpongeGPT V2.");
-          return;
+          history = { internal: [], visible: [] };
+          message.channel.stopTyping();
+          message.channel.send("Conversation reset.");
         }
         conversation.parentMessageId = null;
         message.channel.send("Conversation reset.");
