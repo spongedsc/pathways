@@ -120,7 +120,7 @@ setInterval(async () => {
     console.log(`\nCannot access local AI: Falling back to OpenAI API (timeout)\n`);
   }, 20000);
 
-  makeRequest()
+  await makeRequest()
     .then(() => {
       clearTimeout(timeoutId);
     })
