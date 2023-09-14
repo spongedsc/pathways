@@ -165,6 +165,7 @@ client.on("message", async message => {
           history = { internal: [], visible: [] };
           message.channel.stopTyping();
           message.channel.send("Conversation reset.");
+          return;
         }
         conversation.parentMessageId = null;
         message.channel.send("Conversation reset.");
