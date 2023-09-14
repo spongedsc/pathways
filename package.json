@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "chatgpt but in discord and bad",
   "main": "index.js",
   "type": "module",
@@ -13,7 +13,7 @@
     "axios": "^1.5.0",
     "chatgpt": "^5.2.4",
     "discord.js": "^12.4.0",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.3.1",
     "html-entities": "^2.4.0"
   }
 }
