@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "custom AI model in discord",
   "main": "index.js",
   "type": "module",
@@ -12,7 +12,7 @@
   "dependencies": {
     "axios": "^1.5.0",
     "chatgpt": "^5.2.4",
-    "discord.js": "^12.4.0",
+    "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
     "html-entities": "^2.4.0"
   }

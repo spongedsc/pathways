@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-import Discord from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
 import { ChatGPTAPI } from 'chatgpt'
 
 import fs from 'fs'
@@ -10,7 +10,14 @@ import path from 'path';
 import axios from 'axios';
 import { decode } from 'html-entities';
 
-const client = new Discord.Client();
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
+  ],
+});
 
 client.on("ready", async () => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
@@ -144,7 +151,7 @@ setInterval(async () => {
   checkLocalAI();
 }, 60000);
 
-client.on("message", async message => {
+client.on("messageCreate", async message => {
 
   if (message.channel.id == process.env.CHANNELID) {
     if (message.author.bot) return;
@@ -157,25 +164,23 @@ client.on("message", async message => {
         return;
       }
 
-      message.channel.startTyping();
+      message.channel.sendTyping();
 
       // Reset conversation
       if (message.content.startsWith("%reset")) {
         if (localAIenabled) {
           history = { internal: [], visible: [] };
-          message.channel.stopTyping();
+
           message.channel.send("Conversation reset.");
           return;
         }
         conversation.parentMessageId = null;
         message.channel.send("Conversation reset.");
-        message.channel.stopTyping();
         return;
       }
       // Print conversation ID and parent message ID
       if (message.content.startsWith("%debug")) {
         message.channel.send("parentMessageId: " + conversation.parentMessageId);
-        message.channel.stopTyping();
         return;
 
       }
@@ -194,31 +199,26 @@ client.on("message", async message => {
 
       // Filter @everyone and @here
       if (res.text.includes(`@everyone`)) {
-        message.channel.stopTyping();
         return message.channel.send(`**[FILTERED]**`);
       }
       if (res.text.includes(`@here`)) {
-        message.channel.stopTyping();
         return message.channel.send(`**[FILTERED]**`);
       }
 
       // Handle long responses
       if (res.text.length >= 2000) {
         fs.writeFileSync(path.resolve('./how.txt'), res.text);
-        message.channel.send('', { files: ["./how.txt"] });
-        message.channel.stopTyping();
+        message.channel.send({ content: "", files: ["./how.txt"] });
         return;
       }
 
 
-      message.channel.send(`${res.text}`);
-      if (!localAIenabled) conversation.parentMessageId = res.parentMessageId;
-      message.channel.stopTyping();
+      message.reply(`${res.text}`);
+      if (!localAIenabled) conversation.parentMessageId = res.parentMessageId
 
     } catch (error) {
-      console.log(error)
-      message.channel.stopTyping();
-      return message.channel.send(`\`${error}\``);
+      console.log(error);
+      return message.channel.send(`Error! Yell at arti.`);
     }
 
   }
