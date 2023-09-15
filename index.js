@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 import { Client, GatewayIntentBits } from 'discord.js'
-import { ChatGPTAPI } from 'chatgpt'
 
 import fs from 'fs'
 import path from 'path';
@@ -17,24 +16,15 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
   ],
-  allowedMentions: { parse: [], repliedUser: false}
+  allowedMentions: { parse: [], repliedUser: false }
 });
 
 client.on("ready", async () => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
   client.user.setActivity(`uwu`);
-  await client.channels.fetch(process.env.CHANNELID);
 });
-
-let conversation = {
-  parentMessageId: null
-};
 
 let history = { internal: [], visible: [] };
-
-const api = new ChatGPTAPI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 async function sendChat(userInput, history) {
   const request = {
@@ -114,7 +104,7 @@ async function makeRequest() {
       localAIenabled = true;
       return;
     };
-    console.log(`\nCannot access local AI: Falling back to OpenAI API (non 404 code)\n`);
+    console.log(`\nCannot access local AI (non 404 code)\n`);
     localAIenabled = false;
   }
 };
@@ -126,7 +116,7 @@ async function checkLocalAI() {
   // Set a 20-second timeout
   const timeoutId = setTimeout(() => {
     localAIenabled = false;
-    console.log(`\nCannot access local AI: Falling back to OpenAI API (timeout)\n`);
+    console.log(`\nCannot access local AI (timeout)\n`);
   }, 20000);
 
   await makeRequest()
@@ -140,7 +130,7 @@ async function checkLocalAI() {
     if (localAIenabled) {
       console.log("🔌 SpongeGPT connected!");
     } else {
-      console.log("🔌 SpongeGPT disconnected, now using ChatGPT.");
+      console.log("🔌 SpongeGPT disconnected.");
     }
   }
 }
@@ -169,20 +159,14 @@ client.on("messageCreate", async message => {
 
       // Reset conversation
       if (message.content.startsWith("%reset")) {
-        if (localAIenabled) {
-          history = { internal: [], visible: [] };
-          message.reply("♻️ Conversation reset.");
-          return;
-        }
-        conversation.parentMessageId = null;
-        message.reply("♻️ Conversation reset.");
+        history = { internal: [], visible: [] };
+        message.reply("♻️ Conversation history reset.");
         return;
       }
       // Print conversation ID and parent message ID
       if (message.content.startsWith("%debug")) {
-        message.reply("parentMessageId: " + conversation.parentMessageId);
+        message.reply("no debug info available");
         return;
-
       }
 
       let res;
@@ -191,9 +175,8 @@ client.on("messageCreate", async message => {
 
         res = { text: chatResponse };
       } else {
-        res = await api.sendMessage(message.content, {
-          parentMessageId: conversation.parentMessageId
-        });
+        message.reply(`⚠️ SpongeGPT is currently unreachable, try again later!`);
+        return;
       }
 
       // Handle long responses
@@ -205,8 +188,6 @@ client.on("messageCreate", async message => {
 
 
       message.reply(`${res.text}`);
-      if (!localAIenabled) conversation.parentMessageId = res.parentMessageId
-
     } catch (error) {
       console.error(error);
       return message.reply(`❌ Error! Yell at arti.`);
