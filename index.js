@@ -17,6 +17,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
   ],
+  allowedMentions: { parse: [], repliedUser: false}
 });
 
 client.on("ready", async () => {
@@ -193,12 +194,6 @@ client.on("messageCreate", async message => {
         res = await api.sendMessage(message.content, {
           parentMessageId: conversation.parentMessageId
         });
-      }
-
-
-      // Filter @everyone and @here
-      if (res.text.includes(`@everyone`) || res.text.includes(`@here`)) {
-        return message.reply(`**[FILTERED]**`);
       }
 
       // Handle long responses
