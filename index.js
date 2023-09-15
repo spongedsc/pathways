@@ -137,9 +137,9 @@ async function checkLocalAI() {
     });
   if (localAIenabledprev != localAIenabled) {
     if (localAIenabled) {
-      //client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT connected!");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT connected!");
     } else {
-      //client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT disconnected, now using ChatGPT.");
+      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT disconnected, now using ChatGPT.");
     }
   }
 }
@@ -170,12 +170,11 @@ client.on("messageCreate", async message => {
       if (message.content.startsWith("%reset")) {
         if (localAIenabled) {
           history = { internal: [], visible: [] };
-
-          message.reply("Conversation reset.");
+          message.reply("♻️ Conversation reset.");
           return;
         }
         conversation.parentMessageId = null;
-        message.reply("Conversation reset.");
+        message.reply("♻️ Conversation reset.");
         return;
       }
       // Print conversation ID and parent message ID
@@ -214,8 +213,8 @@ client.on("messageCreate", async message => {
       if (!localAIenabled) conversation.parentMessageId = res.parentMessageId
 
     } catch (error) {
-      console.log(error);
-      return message.reply(`Error! Yell at arti.`);
+      console.error(error);
+      return message.reply(`❌ Error! Yell at arti.`);
     }
 
   }
