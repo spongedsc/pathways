@@ -148,7 +148,7 @@ async function checkLocalAI() {
 checkLocalAI();
 
 // Check every minute if the local AI is enabled
-setInterval(async () => {
+setInterval(() => {
   checkLocalAI();
 }, 60000);
 
