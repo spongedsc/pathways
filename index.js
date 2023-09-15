@@ -171,16 +171,16 @@ client.on("messageCreate", async message => {
         if (localAIenabled) {
           history = { internal: [], visible: [] };
 
-          message.channel.send("Conversation reset.");
+          message.reply("Conversation reset.");
           return;
         }
         conversation.parentMessageId = null;
-        message.channel.send("Conversation reset.");
+        message.reply("Conversation reset.");
         return;
       }
       // Print conversation ID and parent message ID
       if (message.content.startsWith("%debug")) {
-        message.channel.send("parentMessageId: " + conversation.parentMessageId);
+        message.reply("parentMessageId: " + conversation.parentMessageId);
         return;
 
       }
@@ -198,17 +198,14 @@ client.on("messageCreate", async message => {
 
 
       // Filter @everyone and @here
-      if (res.text.includes(`@everyone`)) {
-        return message.channel.send(`**[FILTERED]**`);
-      }
-      if (res.text.includes(`@here`)) {
-        return message.channel.send(`**[FILTERED]**`);
+      if (res.text.includes(`@everyone`) || res.text.includes(`@here`)) {
+        return message.reply(`**[FILTERED]**`);
       }
 
       // Handle long responses
       if (res.text.length >= 2000) {
         fs.writeFileSync(path.resolve('./how.txt'), res.text);
-        message.channel.send({ content: "", files: ["./how.txt"] });
+        message.reply({ content: "", files: ["./how.txt"] });
         return;
       }
 
@@ -218,7 +215,7 @@ client.on("messageCreate", async message => {
 
     } catch (error) {
       console.log(error);
-      return message.channel.send(`Error! Yell at arti.`);
+      return message.reply(`Error! Yell at arti.`);
     }
 
   }
