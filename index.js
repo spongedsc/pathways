@@ -137,9 +137,9 @@ async function checkLocalAI() {
     });
   if (localAIenabledprev != localAIenabled) {
     if (localAIenabled) {
-      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT connected!");
+      console.log("🔌 SpongeGPT connected!");
     } else {
-      client.channels.cache.get(process.env.CHANNELID).send("🔌 SpongeGPT disconnected, now using ChatGPT.");
+      console.log("🔌 SpongeGPT disconnected, now using ChatGPT.");
     }
   }
 }
