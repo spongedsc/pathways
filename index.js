@@ -182,7 +182,7 @@ client.on("message", async message => {
 
       let res;
       if (localAIenabled) {
-        let chatResponse = await sendChat(message.content, history);
+        let chatResponse = await sendChat(`${message.author.username}: ${message.content}`, history);
 
         res = { text: chatResponse };
       } else {
