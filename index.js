@@ -33,7 +33,7 @@ async function sendChat(userInput, history) {
     auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
-    mode: 'chat-instruct',
+    mode: 'chat',
     character: 'SpongeAss2',
     your_name: 'discord user',
     regenerate: false,
@@ -43,7 +43,7 @@ async function sendChat(userInput, history) {
 
     preset: 'None',
     do_sample: true,
-    temperature: 1, // set to 1 for extra fun!!! weeeee (0.7 is default)
+    temperature: 0.1, // set to 1 for extra fun!!! weeeee (0.7 is default)
     top_p: 0.1,
     typical_p: 1,
     epsilon_cutoff: 0,
