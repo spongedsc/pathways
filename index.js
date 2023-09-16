@@ -42,15 +42,15 @@ async function sendChat(userInput, history) {
       'Continue the chat dialogue below. Write a single reply for the character "".\n\n',
 
     preset: 'None',
-    do_sample: true,
-    temperature: 0.1, // set to 1 for extra fun!!! weeeee (0.7 is default)
+    do_sample: false,
+    temperature: 0.9, // set to 1 for extra fun!!! weeeee (0.7 is default)
     top_p: 0.1,
     typical_p: 1,
     epsilon_cutoff: 0,
     eta_cutoff: 0,
     tfs: 1,
     top_a: 0,
-    repetition_penalty: 0.3,
+    repetition_penalty: 2,
     repetition_penalty_range: 0,
     top_k: 40,
     min_length: 0,
@@ -58,7 +58,7 @@ async function sendChat(userInput, history) {
     num_beams: 1,
     penalty_alpha: 0,
     length_penalty: 1,
-    early_stopping: false,
+    early_stopping: true,
     mirostat_mode: 0,
     mirostat_tau: 5,
     mirostat_eta: 0.1,
