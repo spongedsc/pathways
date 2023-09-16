@@ -50,7 +50,7 @@ async function sendChat(userInput, history) {
     eta_cutoff: 0,
     tfs: 1,
     top_a: 0,
-    repetition_penalty: 1.18,
+    repetition_penalty: 0.3,
     repetition_penalty_range: 0,
     top_k: 40,
     min_length: 0,
