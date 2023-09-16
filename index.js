@@ -42,7 +42,7 @@ async function sendChat(userInput, history) {
       'Continue the chat dialogue below. Write a single reply for the character "".\n\n',
 
     preset: 'None',
-    do_sample: false,
+    do_sample: true,
     temperature: 0.9, // set to 1 for extra fun!!! weeeee (0.7 is default)
     top_p: 0.1,
     typical_p: 1,
