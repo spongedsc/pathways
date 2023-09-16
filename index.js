@@ -43,7 +43,7 @@ async function sendChat(userInput, history) {
     auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
-    mode: 'chat',
+    mode: 'chat-instruct',
     character: 'SpongeAss2',
     your_name: 'discord user',
     regenerate: false,
