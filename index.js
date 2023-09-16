@@ -144,7 +144,7 @@ setInterval(() => {
 
 client.on("messageCreate", async message => {
 
-  if (message.channel.id == process.env.CHANNELID) {
+  if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
     if (message.author.bot) return;
     if (!message.content) return;
 
