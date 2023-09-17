@@ -180,6 +180,8 @@ setInterval(() => {
 }, 60000);
 
 client.on("messageCreate", async message => {
+  if (message.author.bot) return;
+  if (!message.content) return;
 
   const subfolderName = 'db';
   const filename = 'messages.txt';
@@ -187,8 +189,6 @@ client.on("messageCreate", async message => {
   saveMessage(subfolderName, filename, message.content);
 
   if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
-    if (message.author.bot) return;
-    if (!message.content) return;
 
     try {
 
