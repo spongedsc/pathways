@@ -43,7 +43,7 @@ function saveMessage(subfolder, filename, text) {
   fs.access(filePath, (err) => {
     if (err) {
       // The file does not exist, so create it and append the text
-      fs.writeFile(filePath, text + '\n\n\n', (err) => {
+      fs.writeFile(filePath, text + '\n', (err) => {
         if (err) {
           console.error('Error creating and writing to the file:', err);
         } else {
@@ -52,7 +52,7 @@ function saveMessage(subfolder, filename, text) {
       });
     } else {
       // The file exists, so open it in append mode and append the text
-      fs.appendFile(filePath, text + '\n\n\n', (err) => {
+      fs.appendFile(filePath, text + '\n', (err) => {
         if (err) {
           console.error('Error appending to the file:', err);
         } else {
