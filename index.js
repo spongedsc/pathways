@@ -26,6 +26,43 @@ client.on("ready", async () => {
 
 let history = { internal: [], visible: [] };
 
+
+function saveMessage(subfolder, filename, text) {
+  // Create the full path to the subfolder
+  const subfolderPath = path.join(process.cwd(), subfolder);
+
+  // Create the full path to the file within the subfolder
+  const filePath = path.join(subfolderPath, filename);
+
+  // Check if the subfolder exists, and create it if it doesn't
+  if (!fs.existsSync(subfolderPath)) {
+    fs.mkdirSync(subfolderPath, { recursive: true });
+  }
+
+  // Check if the file exists within the subfolder
+  fs.access(filePath, (err) => {
+    if (err) {
+      // The file does not exist, so create it and append the text
+      fs.writeFile(filePath, text + '\n\n\n', (err) => {
+        if (err) {
+          console.error('Error creating and writing to the file:', err);
+        } else {
+          console.log('File created and text appended successfully.');
+        }
+      });
+    } else {
+      // The file exists, so open it in append mode and append the text
+      fs.appendFile(filePath, text + '\n\n\n', (err) => {
+        if (err) {
+          console.error('Error appending to the file:', err);
+        } else {
+          console.log('Text appended to the file successfully.');
+        }
+      });
+    }
+  });
+}
+
 async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
@@ -143,6 +180,11 @@ setInterval(() => {
 }, 60000);
 
 client.on("messageCreate", async message => {
+
+  const subfolderName = 'db';
+  const filename = 'messages.txt';
+
+  saveMessage(subfolderName, filename, message.content);
 
   if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
     if (message.author.bot) return;
