@@ -212,8 +212,16 @@ client.on("messageCreate", async message => {
       }
 
       let res;
+
       if (localAIenabled) {
-        let chatResponse = await sendChat(`${message.author.username}: ${message.content}`, history);
+        let chatResponse;
+        if (message.reference) {
+          await message.fetchReference().then(async (reply) => {
+            chatResponse = await sendChat(`> ${reply}\n${message.author.username}: ${message.content}`, history);
+          });
+        } else {
+          chatResponse = await sendChat(`${message.author.username}: ${message.content}`, history);
+        }
 
         res = { text: chatResponse };
       } else {
