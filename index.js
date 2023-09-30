@@ -80,16 +80,16 @@ async function sendChat(userInput, history) {
 
     preset: 'None',
     do_sample: true,
-    temperature: 1, // set to 1 for extra fun!!! weeeee (0.7 is default)
-    top_p: 0.1,
+    temperature: 1.99, // set to 1 for extra fun!!! weeeee (0.7 is default)
+    top_p: 1,
     typical_p: 1,
     epsilon_cutoff: 0,
     eta_cutoff: 0,
     tfs: 1,
     top_a: 0,
-    repetition_penalty: 2,
+    repetition_penalty: 3,
     repetition_penalty_range: 0,
-    top_k: 40,
+    top_k: 200,
     min_length: 0,
     no_repeat_ngram_size: 0,
     num_beams: 1,
