@@ -26,43 +26,6 @@ client.on("ready", async () => {
 
 let history = { internal: [], visible: [] };
 
-
-function saveMessage(subfolder, filename, text) {
-  // Create the full path to the subfolder
-  const subfolderPath = path.join(process.cwd(), subfolder);
-
-  // Create the full path to the file within the subfolder
-  const filePath = path.join(subfolderPath, filename);
-
-  // Check if the subfolder exists, and create it if it doesn't
-  if (!fs.existsSync(subfolderPath)) {
-    fs.mkdirSync(subfolderPath, { recursive: true });
-  }
-
-  // Check if the file exists within the subfolder
-  fs.access(filePath, (err) => {
-    if (err) {
-      // The file does not exist, so create it and append the text
-      fs.writeFile(filePath, text + '\n', (err) => {
-        if (err) {
-          console.error('Error creating and writing to the file:', err);
-        } else {
-          console.log('File created and text appended successfully.');
-        }
-      });
-    } else {
-      // The file exists, so open it in append mode and append the text
-      fs.appendFile(filePath, text + '\n', (err) => {
-        if (err) {
-          console.error('Error appending to the file:', err);
-        } else {
-          console.log('Text appended to the file successfully.');
-        }
-      });
-    }
-  });
-}
-
 async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
@@ -182,12 +145,7 @@ setInterval(() => {
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!message.content) return;
-
-  const subfolderName = 'db';
-  const filename = 'messages.txt';
-
-  saveMessage(subfolderName, filename, message.content);
-
+  
   if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
 
     try {
@@ -197,22 +155,19 @@ client.on("messageCreate", async message => {
         return;
       }
 
-      message.channel.sendTyping();
-
-      // Reset conversation
+      // Handle conversation reset and debug commands
       if (message.content.startsWith("%reset")) {
         history = { internal: [], visible: [] };
         message.reply("♻️ Conversation history reset.");
         return;
       }
-      // Print conversation ID and parent message ID
       if (message.content.startsWith("%debug")) {
         message.reply("no debug info available");
         return;
       }
 
+      // Send user input to AI and receive response
       let res;
-
       if (localAIenabled) {
         let chatResponse;
         if (message.reference) {
@@ -236,8 +191,9 @@ client.on("messageCreate", async message => {
         return;
       }
 
-
+      // Send AI response
       message.reply(`${res.text}`);
+
     } catch (error) {
       console.error(error);
       return message.reply(`❌ Error! Yell at arti.`);
