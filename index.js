@@ -25,7 +25,6 @@ client.on("ready", async () => {
 });
 
 let history = { internal: [], visible: [] };
-let messageCount = 0;
 
 async function sendChat(userInput, history) {
   const request = {
@@ -193,14 +192,6 @@ client.on("messageCreate", async message => {
 
       // Send AI response
       message.reply(`${res.text}`);
-
-      // Increment message count and reset history every 10 messages
-      messageCount++;
-      if (messageCount >= 10) {
-        message.channel.send(`🧹 History auto-reset!`)
-        history = { internal: [], visible: [] };
-        messageCount = 0;
-      }
 
     } catch (error) {
       console.error(error);
