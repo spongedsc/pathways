@@ -29,28 +29,27 @@ let history = { internal: [], visible: [] };
 async function sendChat(userInput, history) {
   const request = {
     user_input: userInput,
-    max_new_tokens: 500,
+    max_new_tokens: 200,
     auto_max_new_tokens: false,
     max_tokens_second: 0,
     history: history,
     mode: 'chat',
-    character: 'SpongeAss2',
+    character: 'SpongeAss-Bot',
     your_name: 'discord user',
     regenerate: false,
     _continue: false,
     chat_instruct_command:
-      'Continue the chat dialogue below. Write a single reply for the character "".\n\n',
-
+      'Continue the chat dialogue below. Write a single reply for the character "<|character|>"\n\n<|prompt|>',
     preset: 'None',
     do_sample: true,
-    temperature: 0.82, // set to 1 for extra fun!!! weeeee (0.7 is default)
+    temperature: 0.82,
     top_p: 0.21,
     typical_p: 1,
     epsilon_cutoff: 0,
     eta_cutoff: 0,
     tfs: 1,
     top_a: 0,
-    repetition_penalty: 3,
+    repetition_penalty: 1.19,
     repetition_penalty_range: 0,
     top_k: 72,
     min_length: 0,
