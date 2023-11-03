@@ -9,6 +9,9 @@ import path from 'path';
 import axios from 'axios';
 import { decode } from 'html-entities';
 
+import { pipeline } from '@xenova/transformers';
+
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -144,7 +147,7 @@ setInterval(() => {
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!message.content) return;
-  
+
   if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
 
     try {
@@ -165,16 +168,38 @@ client.on("messageCreate", async message => {
         return;
       }
 
+
+      let imageDetails = '';
+      if (message.attachments.size > 0) {
+
+        let captioner = await pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning');
+
+        for (const attachment of message.attachments.values()) {
+          try {
+            let url = attachment.url;
+            let output = await captioner(url);
+
+
+            imageDetails = imageDetails + `Attached: image of ${output[0].generated_text}\n`;
+          } catch (error) {
+            console.error(error);
+            return message.reply(`❌ Error! Yell at arti.`);
+          };
+        }
+
+      }
+
+
       // Send user input to AI and receive response
       let res;
       if (localAIenabled) {
         let chatResponse;
         if (message.reference) {
           await message.fetchReference().then(async (reply) => {
-            chatResponse = await sendChat(`> ${reply}\n${message.author.username}: ${message.content}`, history);
+            chatResponse = await sendChat(`> ${reply}\n${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
           });
         } else {
-          chatResponse = await sendChat(`${message.author.username}: ${message.content}`, history);
+          chatResponse = await sendChat(`${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
         }
 
         res = { text: chatResponse };

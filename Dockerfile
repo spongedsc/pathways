@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY ["package.json", "pnpm-lock.yaml", "./"]
 
-RUN pnpm install --prod
+RUN pnpm install --prod --frozen-lockfile
 
 COPY . .
 
