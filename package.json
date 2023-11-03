@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.9.0",
+  "version": "1.8.3",
   "description": "custom AI chatbot for discord",
   "main": "index.js",
   "type": "module",
@@ -10,7 +10,6 @@
   "author": "artifish",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@xenova/transformers": "^2.7.0",
     "axios": "^1.5.0",
     "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
