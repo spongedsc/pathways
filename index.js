@@ -176,6 +176,7 @@ client.on("messageCreate", async message => {
           try {
             let url = attachment.url;
             let promise = new Promise((resolve, reject) => {
+              message.channel.sendTyping();
               backendsocket.emit("imgcaption", url, (val) => {
                 imageDetails = imageDetails + `Attached: image of ${val[0].generated_text}\n`;
                 resolve();
@@ -201,6 +202,7 @@ client.on("messageCreate", async message => {
             chatResponse = await sendChat(`> ${reply}\n${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
           });
         } else {
+          message.channel.sendTyping();
           chatResponse = await sendChat(`${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
         }
 
