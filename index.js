@@ -111,6 +111,9 @@ async function makeRequest() {
   }
 };
 
+backendsocket.emit("chat", 'hi', (val) => {
+  console.log(val);
+});
 
 async function checkLocalAI() {
   let localAIenabledprev = localAIenabled;
@@ -174,11 +177,11 @@ client.on("messageCreate", async message => {
 
         for (const attachment of message.attachments.values()) {
           try {
-            let url = attachment.url;
-            let promise = new Promise((resolve, reject) => {
+            const url = attachment.url;
+            const promise = new Promise((resolve) => {
               message.channel.sendTyping();
               backendsocket.emit("imgcaption", url, (val) => {
-                imageDetails = imageDetails + `Attached: image of ${val[0].generated_text}\n`;
+                imageDetails += `Attached: image of ${val[0].generated_text}\n`;
                 resolve();
               });
             });
@@ -208,8 +211,13 @@ client.on("messageCreate", async message => {
 
         res = { text: chatResponse };
       } else {
-        message.reply(`⚠️ SpongeGPT is currently unreachable, try again later!`);
-        return;
+        const promise = new Promise((resolve) => {
+          backendsocket.emit("chat", message.content, (val) => {
+            res = { text: val };
+            resolve();
+          });
+        });
+        await promise;
       }
 
       // Handle long responses
