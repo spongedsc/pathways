@@ -43,13 +43,9 @@ client.on("messageCreate", async message => {
 
   if (!channels.includes(message.channel.id)) return;
 
+  if (message.content.startsWith("!!")) return;
+
   try {
-
-    // Ignore messages starting with !!
-    if (message.content.startsWith("!!")) {
-      return;
-    }
-
     // Conversation reset
     if (message.content.startsWith("%reset")) {
       if (aiServer == "text-generation-webui") {
