@@ -1,6 +1,3 @@
-import * as dotenv from 'dotenv'
-dotenv.config()
-
 import { Client, GatewayIntentBits } from 'discord.js'
 
 import fs from 'fs'
@@ -9,6 +6,11 @@ import path from 'path';
 import axios from 'axios';
 import { decode } from 'html-entities';
 import { io } from "socket.io-client";
+
+import * as dotenv from 'dotenv'
+dotenv.config()
+
+const channels = process.env.CHANNELIDS.split(",");
 
 const backendsocket = io(process.env.BACKEND_URL);
 
@@ -27,9 +29,109 @@ client.on("ready", async () => {
   client.user.setActivity(`uwu`);
 });
 
-let history = { internal: [], visible: [] };
+let aiServer = 'spongeml';
+let localHistory = { internal: [], visible: [] };
 
-async function sendChat(userInput, history) {
+// Check every five minutes for text-generation-webui
+setInterval(() => {
+  checkTextGenWebUI();
+}, 300000);
+
+client.on("messageCreate", async message => {
+  if (message.author.bot) return;
+  if (!message.content) return;
+
+  if (!channels.includes(message.channel.id)) return;
+
+  if (message.content.startsWith("!!")) return;
+
+  try {
+    // Conversation reset
+    if (message.content.startsWith("%reset")) {
+      if (aiServer == "text-generation-webui") {
+        localHistory = { internal: [], visible: [] };
+        message.reply("♻️ Conversation history reset.");
+      } else {
+        message.reply("Reset is not supported for this AI server.");
+      }
+      return;
+    }
+
+    let imageDetails = '';
+    if (message.attachments.size > 0 && backendsocket.connected) {
+      let promises = [];
+
+      for (const attachment of message.attachments.values()) {
+        try {
+          const url = attachment.url;
+          const promise = new Promise((resolve) => {
+            message.channel.sendTyping();
+            backendsocket.emit("imgcaption", url, (val) => {
+              imageDetails += `Attached: image of ${val[0].generated_text}\n`;
+              resolve();
+            });
+          });
+          promises.push(promise);
+        } catch (error) {
+          console.error(error);
+          return message.reply(`❌ Error! Yell at arti.`);
+        };
+      }
+
+      await Promise.all(promises);
+    }
+
+    // Send message to AI server
+    let res;
+    let formattedUserMessage;
+    if (message.reference) {
+      await message.fetchReference().then(async (reply) => {
+        formattedUserMessage = `> ${reply}\n${message.author.username}: ${message.content}`;
+      });
+    } else {
+      formattedUserMessage = `${message.author.username}: ${message.content}`;
+    }
+
+    switch (aiServer) {
+      case "text-generation-webui":
+        res = { text: await textWebUIChat(formattedUserMessage, localHistory) };
+        break;
+
+      case "spongeml":
+        const promise = new Promise((resolve) => {
+          backendsocket.emit("chat", message.content, (val) => {
+            res = { text: val };
+            resolve();
+          });
+        });
+        await promise;
+        break;
+
+      default:
+        return message.reply(`No AI server available. (THIS SHOULD NOT HAPPEN)`);
+    }
+
+
+    // Handle long responses
+    if (res.text.length >= 2000) {
+      fs.writeFileSync(path.resolve('./how.txt'), res.text);
+      message.reply({ content: "", files: ["./how.txt"] });
+      return;
+    }
+
+    // Send AI response
+    message.reply(`${res.text}`);
+
+  } catch (error) {
+    console.error(error);
+    return message.reply(`❌ Error! Yell at arti.`);
+  }
+
+});
+
+client.login(process.env.DISCORD);
+
+async function textWebUIChat(userInput, history) {
   const request = {
     user_input: userInput,
     max_new_tokens: 200,
@@ -92,36 +194,26 @@ async function sendChat(userInput, history) {
   }
 }
 
-let localAIenabled = false;
+async function checkTextGenWebUI() {
+  async function makeRequest() {
+    try {
+      const response = await axios.get(process.env.LOCAL_AI_URL);
 
-async function makeRequest() {
-  try {
-    const response = await axios.get(process.env.LOCAL_AI_URL);
-
-    if (response.status === 200) {
-      localAIenabled = true;
+      if (response.status === 200) {
+        aiServer = 'text-generation-webui';
+      }
+    } catch (error) {
+      if (error.response.status === 404) {
+        aiServer = 'text-generation-webui';
+        return;
+      };
+      aiServer = 'spongeml';
     }
-  } catch (error) {
-    if (error.response.status === 404) {
-      localAIenabled = true;
-      return;
-    };
-    console.log(`\nCannot access local AI (non 404 code)\n`);
-    localAIenabled = false;
-  }
-};
-
-backendsocket.emit("chat", 'hi', (val) => {
-  console.log(val);
-});
-
-async function checkLocalAI() {
-  let localAIenabledprev = localAIenabled;
+  };
 
   // Set a 20-second timeout
   const timeoutId = setTimeout(() => {
-    localAIenabled = false;
-    console.log(`\nCannot access local AI (timeout)\n`);
+    aiServer = 'spongeml';
   }, 20000);
 
   await makeRequest()
@@ -131,111 +223,4 @@ async function checkLocalAI() {
     .catch((error) => {
       console.error('Error in makeRequest:', error);
     });
-  if (localAIenabledprev != localAIenabled) {
-    if (localAIenabled) {
-      console.log("🔌 SpongeGPT connected!");
-    } else {
-      console.log("🔌 SpongeGPT disconnected.");
-    }
-  }
 }
-
-checkLocalAI();
-
-// Check every minute if the local AI is enabled
-setInterval(() => {
-  checkLocalAI();
-}, 60000);
-
-client.on("messageCreate", async message => {
-  if (message.author.bot) return;
-  if (!message.content) return;
-
-  if (message.channel.id == process.env.CHANNELID || message.channel.id == process.env.CHANNELID2) {
-
-    try {
-
-      // Ignore messages starting with !!
-      if (message.content.startsWith("!!")) {
-        return;
-      }
-
-      // Handle conversation reset and debug commands
-      if (message.content.startsWith("%reset")) {
-        history = { internal: [], visible: [] };
-        message.reply("♻️ Conversation history reset.");
-        return;
-      }
-      if (message.content.startsWith("%debug")) {
-        message.reply("no debug info available");
-        return;
-      }
-
-      let imageDetails = '';
-      if (message.attachments.size > 0 && backendsocket.connected) {
-        let promises = [];
-
-        for (const attachment of message.attachments.values()) {
-          try {
-            const url = attachment.url;
-            const promise = new Promise((resolve) => {
-              message.channel.sendTyping();
-              backendsocket.emit("imgcaption", url, (val) => {
-                imageDetails += `Attached: image of ${val[0].generated_text}\n`;
-                resolve();
-              });
-            });
-            promises.push(promise);
-          } catch (error) {
-            console.error(error);
-            return message.reply(`❌ Error! Yell at arti.`);
-          };
-        }
-
-        await Promise.all(promises);
-      }
-
-
-      // Send user input to AI and receive response
-      let res;
-      if (localAIenabled) {
-        let chatResponse;
-        if (message.reference) {
-          await message.fetchReference().then(async (reply) => {
-            chatResponse = await sendChat(`> ${reply}\n${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
-          });
-        } else {
-          message.channel.sendTyping();
-          chatResponse = await sendChat(`${message.author.username}: ${message.content}\n\n${imageDetails}`, history);
-        }
-
-        res = { text: chatResponse };
-      } else {
-        const promise = new Promise((resolve) => {
-          backendsocket.emit("chat", message.content, (val) => {
-            res = { text: val };
-            resolve();
-          });
-        });
-        await promise;
-      }
-
-      // Handle long responses
-      if (res.text.length >= 2000) {
-        fs.writeFileSync(path.resolve('./how.txt'), res.text);
-        message.reply({ content: "", files: ["./how.txt"] });
-        return;
-      }
-
-      // Send AI response
-      message.reply(`${res.text}`);
-
-    } catch (error) {
-      console.error(error);
-      return message.reply(`❌ Error! Yell at arti.`);
-    }
-
-  }
-});
-
-client.login(process.env.DISCORD);
