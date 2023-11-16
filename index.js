@@ -46,6 +46,8 @@ client.on("messageCreate", async message => {
   if (message.content.startsWith("!!")) return;
 
   try {
+    message.channel.sendTyping();
+
     // Conversation reset
     if (message.content.startsWith("%reset")) {
       if (aiServer == "text-generation-webui") {
@@ -78,6 +80,7 @@ client.on("messageCreate", async message => {
         };
       }
 
+      message.channel.sendTyping();
       await Promise.all(promises);
     }
 
@@ -86,11 +89,12 @@ client.on("messageCreate", async message => {
     let formattedUserMessage;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        formattedUserMessage = `> ${reply}\n${message.author.username}: ${message.content}`;
+        formattedUserMessage = `> ${reply}\n${message.author.username}: ${message.content}\n${imageDetails}`;
       });
     } else {
-      formattedUserMessage = `${message.author.username}: ${message.content}`;
+      formattedUserMessage = `${message.author.username}: ${message.content}\n${imageDetails}`;
     }
+    message.channel.sendTyping();
 
     switch (aiServer) {
       case "text-generation-webui":
