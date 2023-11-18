@@ -54,7 +54,7 @@ client.on("messageCreate", async message => {
         localHistory = { internal: [], visible: [] };
         message.reply("♻️ Conversation history reset.");
       } else if (aiServer == "spongeml") {
-        backendsocket.emit("newchat");
+        backendsocket.emit("newchat", null);
         message.reply("♻️ Conversation history reset.");
       } else {
         message.reply("Reset is not supported for this AI server.");
