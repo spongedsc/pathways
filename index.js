@@ -104,7 +104,7 @@ client.on("messageCreate", async message => {
         res = { text: await textWebUIChat(formattedUserMessage, localHistory) };
         break;
 
-      case "spongeml":
+      case "spongeml": {
         const promise = new Promise((resolve) => {
           backendsocket.emit("chat", message.content, (val) => {
             res = { text: val };
@@ -113,6 +113,7 @@ client.on("messageCreate", async message => {
         });
         await promise;
         break;
+      }
 
       default:
         return message.reply(`No AI server available. (THIS SHOULD NOT HAPPEN)`);
