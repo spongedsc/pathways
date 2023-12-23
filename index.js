@@ -22,6 +22,9 @@ const client = new Client({
   allowedMentions: { parse: [], repliedUser: false }
 });
 
+// Map to store the last message timestamp per person
+const cooldowns = new Map();
+
 client.on("ready", async () => {
   console.log(`Ready! Logged in as ${client.user.tag}`);
   client.user.setActivity(`uwu`);
@@ -36,6 +39,12 @@ client.on("messageCreate", async message => {
 
   if (message.content.startsWith("!!")) return;
 
+  // Check cooldown for the person who sent the message
+  const lastMessageTime = cooldowns.get(message.author.id);
+  if (lastMessageTime && Date.now() - lastMessageTime < 1000) {
+    return; // Ignore the message if the cooldown hasn't expired
+  }
+
   try {
     if (backendsocket.disconnected) return message.reply(`🔕 Backend socket is not connected. This shouldn't happen! Yell at arti.`);
     message.channel.sendTyping();
@@ -46,6 +55,9 @@ client.on("messageCreate", async message => {
       message.reply(`♻️ Conversation history reset.`);
       return;
     }
+
+    // Update the last message timestamp for the person
+    cooldowns.set(message.author.id, Date.now());
 
     let imageDetails = '';
     if (message.attachments.size > 0) {
