@@ -89,10 +89,10 @@ client.on("messageCreate", async message => {
     let formattedUserMessage;
     if (message.reference) {
       await message.fetchReference().then((reply) => {
-        formattedUserMessage = `> ${reply}\n${message.author.displayName}: ${message.content}\n${imageDetails}`;
+        formattedUserMessage = `> ${reply}\n${message.author.username}: ${message.content}\n${imageDetails}`;
       });
     } else {
-      formattedUserMessage = `${message.author.displayName}: ${message.content}\n${imageDetails}`;
+      formattedUserMessage = `${message.author.username}: ${message.content}\n${imageDetails}`;
     }
     message.channel.sendTyping();
 
@@ -115,13 +115,8 @@ client.on("messageCreate", async message => {
       return;
     }
 
-    try {
-      message.reply({ content: `${response}`, failIfNotExists: true });
-    } catch (error) {
-      const quotedUserMessage = formattedUserMessage.split('\n').map(line => `> ${line}`).join('\n');
-      message.channel.send(`${quotedUserMessage}\n\n${response}`);
-    }
-
+    // Send AI response
+    message.reply({ content: `${response}`, failIfNotExists: false });
   } catch (error) {
     console.error(error);
     return message.reply(`❌ Error! Yell at arti.`);
