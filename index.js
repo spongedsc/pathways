@@ -89,19 +89,19 @@ client.on("messageCreate", async message => {
     let formattedUserMessage;
     if (message.reference) {
       await message.fetchReference().then((reply) => {
-        formattedUserMessage = `> ${reply}\n${message.author.username}: ${message.content}\n${imageDetails}`;
+        formattedUserMessage = `> ${reply}\n${message.author.displayName}: ${message.content}\n${imageDetails}`;
       });
     } else {
-      formattedUserMessage = `${message.author.username}: ${message.content}\n${imageDetails}`;
+      formattedUserMessage = `${message.author.displayName}: ${message.content}\n${imageDetails}`;
     }
     message.channel.sendTyping();
 
-    if (message.content.includes("[NoCAI]")) {
-      formattedUserMessage = formattedUserMessage.replace("[NoCAI]", "")
+    if (message.content.includes("@3")) {
+      formattedUserMessage = formattedUserMessage.replace("@3", "")
     }
 
     const promise = new Promise((resolve) => {
-      backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": message.content.includes("[NoCAI]") }, (val) => {
+      backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": message.content.includes("@3") }, (val) => {
         response = val;
         resolve();
       });
