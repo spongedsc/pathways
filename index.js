@@ -32,7 +32,7 @@ client.on("ready", async () => {
 
 
 client.on("messageCreate", async message => {
-  if (message.author.bot) return;
+  if (message.author.id == client.user.id) return;
   if (!message.content) return;
 
   if (!channels.includes(message.channel.id)) return;
