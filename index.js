@@ -33,9 +33,9 @@ client.on("ready", async () => {
 
 client.on("messageCreate", async message => {
   if (message.author.id == client.user.id) return;
-  if (!message.content) return;
+  if (!message.content && !message.attachments) return;
 
-  if (!channels.includes(message.channel.id)) return;
+  if (Math.random() < 0.5 && !channels.includes(message.channel.id)) return;
 
   if (message.content.startsWith("!!")) return;
 
