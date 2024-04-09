@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.23.2",
+  "version": "1.24.3",
   "description": "custom AI chatbot for discord",
   "main": "index.js",
   "type": "module",
@@ -13,6 +13,8 @@
   "dependencies": {
     "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
+    "locate-chrome": "^0.1.1",
+    "node_characterai": "^1.2.7",
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
