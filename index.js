@@ -96,7 +96,6 @@ client.on("messageCreate", async message => {
     }
 
     // Send message to CharacterAI
-    let response;
     let formattedUserMessage;
     if (message.reference) {
       await message.fetchReference().then((reply) => {
@@ -107,7 +106,7 @@ client.on("messageCreate", async message => {
     }
 
     message.channel.sendTyping();
-    response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
+    let response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
 
     // Handle long responses
     if (response.text.length >= 2000) {
