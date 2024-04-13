@@ -5,7 +5,6 @@ import path from 'path';
 
 import { io } from "socket.io-client";
 import CharacterAI from 'node_characterai';
-import locateChrome from 'locate-chrome';
 
 import * as dotenv from 'dotenv'
 
@@ -26,7 +25,6 @@ const client = new Client({
 });
 
 const characterAI = new CharacterAI();
-characterAI.requester.puppeteerPath = await new Promise(resolve => locateChrome((arg) => resolve(arg))) || '';
 await characterAI.authenticateWithToken(process.env.CHARACTERAI_TOKEN);
 
 // Map to store the last message timestamp per person
