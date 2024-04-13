@@ -37,21 +37,26 @@ client.on("ready", async () => {
   client.user.setActivity(`uwu`);
 });
 
+function shouldIReply(message) {
+  if (message.author.id == client.user.id) return false;
+  if (!message.content && !message.attachments) return false;
+  if (Math.random() < process.env.REPLY_CHANCE && !channels.includes(message.channel.id) && !message.mentions.has(client.user.id)) return false;
+  if (message.content.startsWith("!!")) return false;
 
-client.on("messageCreate", async message => {
-  if (message.author.id == client.user.id) return;
-  if (!message.content && !message.attachments) return;
-
-  if (Math.random() < process.env.REPLY_CHANCE && !channels.includes(message.channel.id) && !message.mentions.has(client.user.id)) return;
-
-  if (message.content.startsWith("!!")) return;
 
   // Check cooldown for the person who sent the message
   const lastMessageTime = cooldowns.get(message.author.id);
-  if (lastMessageTime && Date.now() - lastMessageTime < 1000) return; // Ignore the message if the cooldown hasn't expired
+  if (lastMessageTime && Date.now() - lastMessageTime < 1000) return false; // Ignore the message if the cooldown hasn't expired
 
   // Update the last message timestamp for the person
   cooldowns.set(message.author.id, Date.now());
+
+  return true;
+}
+
+
+client.on("messageCreate", async message => {
+  if (!shouldIReply(message)) return;
 
   try {
     if (backendsocket.disconnected && message.attachments.size > 0) message.channel.send(`🔕 Backend socket is not connected. Image recognition is disabled.`);
