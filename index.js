@@ -4,11 +4,8 @@ import fs from 'fs'
 import path from 'path';
 
 import { io } from "socket.io-client";
-import CharacterAI from 'node_characterai';
-import locateChrome from 'locate-chrome';
 
 import * as dotenv from 'dotenv'
-
 dotenv.config()
 
 const channels = process.env.CHANNELIDS.split(",");
@@ -24,10 +21,6 @@ const client = new Client({
   ],
   allowedMentions: { parse: [], repliedUser: false }
 });
-
-const characterAI = new CharacterAI();
-characterAI.requester.puppeteerPath = await new Promise(resolve => locateChrome((arg) => resolve(arg))) || '';
-await characterAI.authenticateWithToken(process.env.CHARACTERAI_TOKEN);
 
 // Map to store the last message timestamp per person
 const cooldowns = new Map();
@@ -59,19 +52,21 @@ client.on("messageCreate", async message => {
   if (!shouldIReply(message)) return;
 
   try {
-    if (backendsocket.disconnected && message.attachments.size > 0) message.channel.send(`🔕 Backend socket is not connected. Image recognition is disabled.`);
-    const chat = await characterAI.createOrContinueChat(process.env.CHARACTER_ID);
+    if (backendsocket.disconnected) return message.reply(`🔕 Backend socket is not connected. This shouldn't happen! Yell at arti.`);
     message.channel.sendTyping();
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
-      chat.saveAndStartNewChat()
+      backendsocket.emit("newchat", null);
       message.reply(`♻️ Conversation history reset.`);
       return;
     }
 
+    // Update the last message timestamp for the person
+    cooldowns.set(message.author.id, Date.now());
+
     let imageDetails = '';
-    if (message.attachments.size > 0 && !backendsocket.disconnected) {
+    if (message.attachments.size > 0) {
       let promises = [];
 
       for (const attachment of message.attachments.values()) {
@@ -104,23 +99,23 @@ client.on("messageCreate", async message => {
     } else {
       formattedUserMessage = `${message.author.displayName}: ${message.content}\n${imageDetails}`;
     }
-
     message.channel.sendTyping();
     let response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
 
     // Handle long responses
-    if (response.text.length >= 2000) {
-      fs.writeFileSync(path.resolve('./how.txt'), response.text);
+    if (response.length >= 2000) {
+      fs.writeFileSync(path.resolve('./how.txt'), response);
       message.reply({ content: "", files: ["./how.txt"], failIfNotExists: false });
       return;
     }
 
     // Send AI response
-    message.reply({ content: `${response.text}`, failIfNotExists: false });
+    message.reply({ content: `${response}`, failIfNotExists: false });
   } catch (error) {
     console.error(error);
     return message.reply(`❌ Error! Yell at arti.`);
   }
+
 });
 
 client.login(process.env.DISCORD);
