@@ -30,20 +30,26 @@ client.on("ready", async () => {
   client.user.setActivity(`uwu`);
 });
 
+function shouldIReply(message) {
+  if (message.author.id == client.user.id) return false;
+  if (!message.content && !message.attachments) return false;
+  if (Math.random() < process.env.REPLY_CHANCE && !channels.includes(message.channel.id) && !message.mentions.has(client.user.id)) return false;
+  if (message.content.startsWith("!!")) return false;
 
-client.on("messageCreate", async message => {
-  if (message.author.id == client.user.id) return;
-  if (!message.content && !message.attachments) return;
-
-  if (Math.random() < process.env.REPLY_CHANCE && !channels.includes(message.channel.id) && !message.mentions.has(client.user.id)) return;
-
-  if (message.content.startsWith("!!")) return;
 
   // Check cooldown for the person who sent the message
   const lastMessageTime = cooldowns.get(message.author.id);
-  if (lastMessageTime && Date.now() - lastMessageTime < 1000) {
-    return; // Ignore the message if the cooldown hasn't expired
-  }
+  if (lastMessageTime && Date.now() - lastMessageTime < 1000) return false; // Ignore the message if the cooldown hasn't expired
+
+  // Update the last message timestamp for the person
+  cooldowns.set(message.author.id, Date.now());
+
+  return true;
+}
+
+
+client.on("messageCreate", async message => {
+  if (!shouldIReply(message)) return;
 
   try {
     if (backendsocket.disconnected) return message.reply(`🔕 Backend socket is not connected. This shouldn't happen! Yell at arti.`);
@@ -84,8 +90,7 @@ client.on("messageCreate", async message => {
       await Promise.all(promises);
     }
 
-    // Send message to AI server
-    let response;
+    // Send message to CharacterAI
     let formattedUserMessage;
     if (message.reference) {
       await message.fetchReference().then((reply) => {
@@ -95,18 +100,7 @@ client.on("messageCreate", async message => {
       formattedUserMessage = `${message.author.displayName}: ${message.content}\n${imageDetails}`;
     }
     message.channel.sendTyping();
-
-    if (message.content.includes("@3")) {
-      formattedUserMessage = formattedUserMessage.replace("@3", "")
-    }
-
-    const promise = new Promise((resolve) => {
-      backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": message.content.includes("@3") }, (val) => {
-        response = val;
-        resolve();
-      });
-    });
-    await promise;
+    let response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
 
     // Handle long responses
     if (response.length >= 2000) {
