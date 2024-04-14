@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits } from 'discord.js'
 
 import fs from 'fs'
 import path from 'path';
+import { DateTime } from 'luxon';
 
 import { io } from "socket.io-client";
 import CharacterAI from 'node_characterai';
@@ -96,14 +97,13 @@ client.on("messageCreate", async message => {
     }
 
     // Send message to CharacterAI
-    let formattedUserMessage;
+    let formattedUserMessage = `${message.author.username} at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
+
     if (message.reference) {
-      await message.fetchReference().then((reply) => {
-        formattedUserMessage = `> ${reply}\n${message.author.displayName}: ${message.content}\n${imageDetails}`;
+      await message.fetchReference().then(async (reply) => {
+        formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
       });
-    } else {
-      formattedUserMessage = `${message.author.displayName}: ${message.content}\n${imageDetails}`;
-    }
+    };
 
     message.channel.sendTyping();
     let response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
