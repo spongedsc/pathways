@@ -6,8 +6,6 @@ import path from 'path';
 import { DateTime } from 'luxon';
 
 import { io } from "socket.io-client";
-import CharacterAI from 'node_characterai';
-import locateChrome from 'locate-chrome';
 import { MsEdgeTTS } from "msedge-tts";
 
 import * as dotenv from 'dotenv'
@@ -30,10 +28,6 @@ const client = new Client({
 });
 
 if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
-
-const characterAI = new CharacterAI();
-characterAI.requester.puppeteerPath = await new Promise(resolve => locateChrome((arg) => resolve(arg))) || '';
-await characterAI.authenticateWithToken(process.env.CHARACTERAI_TOKEN);
 
 // Map to store the last message timestamp per person
 const cooldowns = new Map();
@@ -65,13 +59,12 @@ client.on("messageCreate", async message => {
   if (!shouldIReply(message)) return;
 
   try {
-    if (backendsocket.disconnected && message.attachments.size > 0) message.channel.send(`🔕 Backend socket is not connected. Image recognition is disabled.`);
-    const chat = await characterAI.createOrContinueChat(process.env.CHARACTER_ID);
+    if (backendsocket.disconnected) message.channel.send(`🔕 Backend socket is not connected. Try again later.`);
     message.channel.sendTyping();
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
-      chat.saveAndStartNewChat()
+      backendsocket.emit("newchat", null);
       message.reply(`♻️ Conversation history reset.`);
       return;
     }
@@ -111,7 +104,13 @@ client.on("messageCreate", async message => {
     };
 
     message.channel.sendTyping();
-    let response = await chat.sendAndAwaitResponse(formattedUserMessage, true);
+    const sendchat = new Promise((resolve) => {
+      backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": false }, (val) => {
+        response.text = val;
+        resolve();
+      });
+    });
+    await sendchat;
 
     // Handle long responses
     if (response.text.length >= 2000) {
