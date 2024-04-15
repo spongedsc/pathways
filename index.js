@@ -1,12 +1,14 @@
-import { Client, GatewayIntentBits } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js';
+import { joinVoiceChannel, createAudioPlayer, createAudioResource } from '@discordjs/voice';
 
-import fs from 'fs'
+import fs from 'fs';
 import path from 'path';
 import { DateTime } from 'luxon';
 
 import { io } from "socket.io-client";
 import CharacterAI from 'node_characterai';
 import locateChrome from 'locate-chrome';
+import { MsEdgeTTS } from "msedge-tts";
 
 import * as dotenv from 'dotenv'
 
@@ -22,9 +24,12 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildVoiceStates,
   ],
   allowedMentions: { parse: [], repliedUser: false }
 });
+
+if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
 
 const characterAI = new CharacterAI();
 characterAI.requester.puppeteerPath = await new Promise(resolve => locateChrome((arg) => resolve(arg))) || '';
@@ -110,17 +115,50 @@ client.on("messageCreate", async message => {
 
     // Handle long responses
     if (response.text.length >= 2000) {
-      fs.writeFileSync(path.resolve('./how.txt'), response.text);
-      message.reply({ content: "", files: ["./how.txt"], failIfNotExists: false });
+      fs.writeFileSync(path.resolve('./temp/how.txt'), response.text);
+      message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
 
     // Send AI response
     message.reply({ content: `${response.text}`, failIfNotExists: false });
+
+    // tts!
+    if (message.member.voice.channel) {
+      tts(message, response.text);
+    }
   } catch (error) {
     console.error(error);
     return message.reply(`❌ Error! Yell at arti.`);
   }
 });
+
+async function tts(message, text) {
+  if (message.member.voice.channel) {
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata("en-US-AnaNeural", MsEdgeTTS.OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
+    const filePath = await tts.toFile("./temp/audio.mp3", text);
+
+    const channel = message.member.voice.channel;
+
+    const connection = joinVoiceChannel({
+      channelId: channel.id,
+      guildId: channel.guild.id,
+      adapterCreator: channel.guild.voiceAdapterCreator,
+    });
+
+    const player = createAudioPlayer();
+    const resource = createAudioResource(fs.createReadStream(filePath));
+
+    connection.subscribe(player);
+    player.play(resource);
+
+    player.on('error', error => {
+      console.error(`Audio Error: ${error.message}`);
+    });
+  } else {
+    message.reply('You need to join a voice channel first!');
+  }
+}
 
 client.login(process.env.DISCORD);
