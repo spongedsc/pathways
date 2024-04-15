@@ -38,7 +38,6 @@ client.on("ready", async () => {
 });
 
 function shouldIReply(message) {
-  if (message.author.bot) return false;
   if (!message.content && !message.attachments) return false;
   if (Math.random() < process.env.REPLY_CHANCE && !channels.includes(message.channel.id) && !message.mentions.has(client.user.id)) return false;
   if (message.content.startsWith("!!")) return false;
@@ -56,6 +55,7 @@ function shouldIReply(message) {
 
 
 client.on("messageCreate", async message => {
+  if (message.author.bot) return;
   if (!shouldIReply(message)) return;
 
   try {
