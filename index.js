@@ -103,28 +103,29 @@ client.on("messageCreate", async message => {
       });
     };
 
+    let response;
     message.channel.sendTyping();
     const sendchat = new Promise((resolve) => {
       backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": false }, (val) => {
-        response.text = val;
+        response = val;
         resolve();
       });
     });
     await sendchat;
 
     // Handle long responses
-    if (response.text.length >= 2000) {
-      fs.writeFileSync(path.resolve('./temp/how.txt'), response.text);
+    if (response.length >= 2000) {
+      fs.writeFileSync(path.resolve('./temp/how.txt'), response);
       message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
 
     // Send AI response
-    message.reply({ content: `${response.text}`, failIfNotExists: false });
+    message.reply({ content: `${response}`, failIfNotExists: false });
 
     // tts!
     if (message.member.voice.channel) {
-      tts(message, response.text);
+      tts(message, response);
     }
   } catch (error) {
     console.error(error);
