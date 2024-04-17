@@ -99,7 +99,7 @@ client.on("messageCreate", async message => {
 
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        formattedUserMessage += `> ${reply}\n${formattedUserMessage}`;
+        formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
       });
     };
 
