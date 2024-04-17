@@ -86,6 +86,8 @@ async function getPronouns(userid) {
   }
 }
 
+let lastMessage = "";
+
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!shouldIReply(message)) return;
@@ -98,6 +100,11 @@ client.on("messageCreate", async message => {
     if (message.content.startsWith("%reset")) {
       backendsocket.emit("newchat", null);
       message.reply(`♻️ Conversation history reset.`);
+      return;
+    }
+
+    if (message.content.startsWith("%readback")) {
+      message.reply(lastMessage);
       return;
     }
 
@@ -126,15 +133,14 @@ client.on("messageCreate", async message => {
       await Promise.all(promises);
     }
 
-    // Get pronouns
-    let pronouns = await getPronouns(message.author.id);
     // Send message to CharacterAI
-    let formattedUserMessage = `${message.author.username} (${pronouns}) at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
+    let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
         formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
       });
     };
+    lastMessage = formattedUserMessage;
 
     let response;
     message.channel.sendTyping();
