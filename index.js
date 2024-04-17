@@ -95,11 +95,11 @@ client.on("messageCreate", async message => {
     }
 
     // Send message to CharacterAI
-    let formattedUserMessage = `${message.author.username} at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
+    let formattedUserMessage = `${message.author.username} (they/them) at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
 
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
+        formattedUserMessage += `> ${reply}\n${formattedUserMessage}`;
       });
     };
 
