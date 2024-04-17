@@ -104,7 +104,7 @@ client.on("messageCreate", async message => {
     }
 
     if (message.content.startsWith("%readback")) {
-      message.reply(lastMessage);
+      message.reply(`\`${lastMessage}\``);
       return;
     }
 
