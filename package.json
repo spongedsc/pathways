@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.26.4",
+  "version": "1.27.0",
   "description": "custom AI chatbot for discord",
   "main": "index.js",
   "type": "module",
@@ -12,6 +12,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
+    "axios": "^1.6.8",
     "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
     "ffmpeg-static": "^5.2.0",

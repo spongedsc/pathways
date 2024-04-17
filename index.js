@@ -4,6 +4,7 @@ import { joinVoiceChannel, createAudioPlayer, createAudioResource } from '@disco
 import fs from 'fs';
 import path from 'path';
 import { DateTime } from 'luxon';
+import axios from 'axios';
 
 import { io } from "socket.io-client";
 import { MsEdgeTTS } from "msedge-tts";
@@ -53,6 +54,37 @@ function shouldIReply(message) {
   return true;
 }
 
+async function getPronouns(userid) {
+  // this is spagetti i'm sorry
+  try {
+    const response = await axios.get('/api/v2/lookup', {
+      baseURL: 'https://pronoundb.org',
+      params: {
+        platform: 'discord',
+        ids: userid
+      }
+    });
+
+    let pronounsresponse = response.data;
+
+
+
+    for (let userId in pronounsresponse) {
+      if (pronounsresponse[userId].sets.hasOwnProperty('en')) {
+        pronounsresponse[userId] = pronounsresponse[userId].sets['en'].join('/');
+      } else {
+        pronounsresponse[userId] = 'they/them';
+      }
+    }
+    if (!pronounsresponse.hasOwnProperty(userid)) {
+      pronounsresponse[userid] = 'they/them';
+    }
+
+    return pronounsresponse[userid];
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
@@ -94,9 +126,10 @@ client.on("messageCreate", async message => {
       await Promise.all(promises);
     }
 
+    // Get pronouns
+    let pronouns = await getPronouns(message.author.id);
     // Send message to CharacterAI
-    let formattedUserMessage = `${message.author.username} (they/them) at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
-
+    let formattedUserMessage = `${message.author.username} (${pronouns}) at ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
         formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
