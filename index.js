@@ -93,7 +93,7 @@ client.on("messageCreate", async message => {
   if (!shouldIReply(message)) return;
 
   try {
-    if (backendsocket.disconnected) return message.channel.send(`🔕 Backend is not connected. Try again later.`);
+    if (backendsocket.disconnected) message.channel.send(`🔕 Backend is not connected. Try again later.`);
     message.channel.sendTyping();
 
     // Conversation reset
