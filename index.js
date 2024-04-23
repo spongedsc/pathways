@@ -87,6 +87,7 @@ async function getPronouns(userid) {
 }
 
 let lastMessage = "";
+let toggleLocal = false;
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
@@ -105,6 +106,12 @@ client.on("messageCreate", async message => {
 
     if (message.content.startsWith("%readback")) {
       message.reply(`\`${lastMessage}\``);
+      return;
+    }
+
+    if (message.content.startsWith("%local")) {
+      toggleLocal = !toggleLocal;
+      message.reply(`🔊 Local mode is now ${toggleLocal ? "enabled" : "disabled"}.`);
       return;
     }
 
@@ -149,19 +156,16 @@ client.on("messageCreate", async message => {
     let response;
     message.channel.sendTyping();
     const sendchat = new Promise((resolve) => {
-      switch (message.content.includes("@local")) {
-        case false:
-          backendsocket.emit("chat", { "message": formattedUserMessage }, (val) => {
-            response = val;
-            resolve();
-          });
-          break;
-        case true:
-          backendsocket.emit("chat", { "message": formattedUserMessage, "textgenwui": true }, (val) => {
-            response = val;
-            resolve();
-          });
-          break;
+      if (toggleLocal) {
+        backendsocket.emit("chat", { "message": formattedUserMessage, "textgenwui": true }, (val) => {
+          response = val;
+          resolve();
+        });
+      } else {
+        backendsocket.emit("chat", { "message": formattedUserMessage }, (val) => {
+          response = val;
+          resolve();
+        });
       }
     });
     await sendchat;
