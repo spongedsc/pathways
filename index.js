@@ -186,7 +186,7 @@ client.on("messageCreate", async message => {
 async function localEnabled() {
   let response;
   const sendchat = new Promise((resolve) => {
-    backendsocket.emit("localgenenabled", (val) => {
+    backendsocket.emit("localgenenabled", {}, (val) => {
       response = val;
       resolve();
     });
