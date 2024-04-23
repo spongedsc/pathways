@@ -149,10 +149,20 @@ client.on("messageCreate", async message => {
     let response;
     message.channel.sendTyping();
     const sendchat = new Promise((resolve) => {
-      backendsocket.emit("chat", { "message": formattedUserMessage, "usellm": false }, (val) => {
-        response = val;
-        resolve();
-      });
+      switch (message.content.includes("@local")) {
+        case false:
+          backendsocket.emit("chat", { "message": formattedUserMessage }, (val) => {
+            response = val;
+            resolve();
+          });
+          break;
+        case true:
+          backendsocket.emit("chat", { "message": formattedUserMessage, "textgenwui": true }, (val) => {
+            response = val;
+            resolve();
+          });
+          break;
+      }
     });
     await sendchat;
 
