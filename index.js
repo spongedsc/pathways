@@ -87,7 +87,6 @@ async function getPronouns(userid) {
 }
 
 let lastMessage = "";
-let toggleLocal = false;
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
@@ -106,12 +105,6 @@ client.on("messageCreate", async message => {
 
     if (message.content.startsWith("%readback")) {
       message.reply(`\`${lastMessage}\``);
-      return;
-    }
-
-    if (message.content.startsWith("%local")) {
-      toggleLocal = !toggleLocal;
-      message.reply(`🔊 Local mode is now ${toggleLocal ? "enabled" : "disabled"}.`);
       return;
     }
 
@@ -156,17 +149,17 @@ client.on("messageCreate", async message => {
     let response;
     message.channel.sendTyping();
     const sendchat = new Promise((resolve) => {
-      if (toggleLocal) {
+      if (localEnabled()) {
         backendsocket.emit("chat", { "message": formattedUserMessage, "textgenwui": true }, (val) => {
           response = val;
           resolve();
         });
-      } else {
-        backendsocket.emit("chat", { "message": formattedUserMessage }, (val) => {
-          response = val;
-          resolve();
-        });
+        return;
       }
+      backendsocket.emit("chat", { "message": formattedUserMessage }, (val) => {
+        response = val;
+        resolve();
+      });
     });
     await sendchat;
 
@@ -189,6 +182,18 @@ client.on("messageCreate", async message => {
     return message.reply(`❌ Error! Yell at arti.`);
   }
 });
+
+async function localEnabled() {
+  let response;
+  const sendchat = new Promise((resolve) => {
+    backendsocket.emit("localgenenabled", (val) => {
+      response = val;
+      resolve();
+    });
+  });
+  await sendchat;
+  return response;
+}
 
 async function tts(message, text) {
   if (message.member.voice.channel) {
