@@ -28,6 +28,13 @@ const client = new Client({
   allowedMentions: { parse: [], repliedUser: false }
 });
 
+backendsocket.on("connect_error", (err) => {
+  // the reason of the error, for example "xhr poll error"
+  console.log(err.message);
+  // some additional description, for example the status code of the initial HTTP response
+  console.log(err.description);
+});
+
 if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
 
 // Map to store the last message timestamp per person
