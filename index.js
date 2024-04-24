@@ -117,9 +117,7 @@ client.on("messageCreate", async message => {
     }
 
     if (message.content.startsWith("%features")) {
-      message.reply(`ℹ️ Features\n\n
-      💬 Text Generation: ${enableLocal ? "Custom Model" : "CharacterAI"}\n
-      🖼️ Image Recognition: ${await checkImageRecognition() ? "Enabled" : "Disabled"}`);
+      message.reply(`ℹ️ Features\n\n💬 Text Generation: ${enableLocal ? "Custom AI" : "CharacterAI"}\n🖼️ Image Recognition: ${await checkImageRecognition() ? "Enabled" : "Disabled"}`);
       return;
     }
 
