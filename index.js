@@ -1,17 +1,12 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import { joinVoiceChannel, createAudioPlayer, createAudioResource } from '@discordjs/voice';
 
-import fs from 'fs';
-import path from 'path';
+import { constants } from 'node:fs';
+import { access, mkdir } from "node:fs/promises";
 import { DateTime } from 'luxon';
-import axios from 'axios';
 
 import { io } from "socket.io-client";
 import { MsEdgeTTS } from "msedge-tts";
-
-import * as dotenv from 'dotenv'
-
-dotenv.config()
 
 const channels = process.env.CHANNELIDS.split(",");
 
@@ -34,7 +29,12 @@ backendsocket.on("connect_error", (err) => {
   console.error(`Error connecting to backend: ${err.message}`);
 });
 
-if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
+// Create the temp directory if it doesn't exist
+try {
+  await access("./temp", constants.F_OK);
+} catch (e) {
+  await mkdir("./temp", { recursive: true });
+}
 
 // Map to store the last message timestamp per person
 const cooldowns = new Map();
@@ -63,17 +63,8 @@ function shouldIReply(message) {
 async function getPronouns(userid) {
   // this is spagetti i'm sorry
   try {
-    const response = await axios.get('/api/v2/lookup', {
-      baseURL: 'https://pronoundb.org',
-      params: {
-        platform: 'discord',
-        ids: userid
-      }
-    });
-
-    let pronounsresponse = response.data;
-
-
+    const response = await fetch(`https://pronoundb.org/api/v2/lookup?platform=discord&ids=${userid}`);
+    let pronounsresponse = await response.json();;
 
     for (let userId in pronounsresponse) {
       if (pronounsresponse[userId].sets.hasOwnProperty('en')) {
@@ -143,7 +134,7 @@ client.on("messageCreate", async message => {
 
     // Handle long responses
     if (response.length >= 2000) {
-      fs.writeFileSync(path.resolve('./temp/how.txt'), response);
+      await Bun.write('./temp/how.txt', response);
       message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
@@ -216,7 +207,7 @@ async function tts(message, text) {
   });
 
   const player = createAudioPlayer();
-  const resource = createAudioResource(fs.createReadStream(filePath));
+  const resource = createAudioResource(Bun.file(filePath).stream());
 
   connection.subscribe(player);
   player.play(resource);
