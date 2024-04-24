@@ -116,6 +116,13 @@ client.on("messageCreate", async message => {
       return;
     }
 
+    if (message.content.startsWith("%features")) {
+      message.reply(`ℹ️ Features\n\n
+      💬 Text Generation: ${enableLocal ? "Custom Model" : "CharacterAI"}\n
+      🖼️ Image Recognition: ${await checkImageRecognition() ? "Enabled" : "Disabled"}`);
+      return;
+    }
+
     let imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
@@ -165,6 +172,18 @@ async function checkLocal() {
   let response;
   const sendchat = new Promise((resolve) => {
     backendsocket.emit("localgenenabled", {}, (val) => {
+      response = val;
+      resolve();
+    });
+  });
+  await sendchat;
+  return response;
+}
+
+async function checkImageRecognition() {
+  let response;
+  const sendchat = new Promise((resolve) => {
+    backendsocket.emit("imagerecognitionenabled", {}, (val) => {
       response = val;
       resolve();
     });
