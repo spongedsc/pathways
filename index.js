@@ -15,7 +15,9 @@ dotenv.config()
 
 const channels = process.env.CHANNELIDS.split(",");
 
-const backendsocket = io(process.env.BACKEND_URL);
+const backendsocket = io(process.env.BACKEND_URL, {
+  transports: ['websocket']
+});
 
 const client = new Client({
   intents: [
