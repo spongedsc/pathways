@@ -115,30 +115,7 @@ client.on("messageCreate", async message => {
       return;
     }
 
-    let imageDetails = '';
-    if (message.attachments.size > 0 && !backendsocket.disconnected) {
-      let promises = [];
-
-      for (const attachment of message.attachments.values()) {
-        try {
-          const url = attachment.url;
-          const promise = new Promise((resolve) => {
-            message.channel.sendTyping();
-            backendsocket.emit("imgcaption", url, (val) => {
-              imageDetails += `Attached: image of ${val[0].generated_text}\n`;
-              resolve();
-            });
-          });
-          promises.push(promise);
-        } catch (error) {
-          console.error(error);
-          return message.reply(`❌ Error! Yell at arti.`);
-        };
-      }
-
-      message.channel.sendTyping();
-      await Promise.all(promises);
-    }
+    let imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
@@ -183,32 +160,57 @@ client.on("messageCreate", async message => {
   }
 });
 
-async function tts(message, text) {
-  if (message.member.voice.channel) {
-    const tts = new MsEdgeTTS();
-    await tts.setMetadata("en-US-AnaNeural", MsEdgeTTS.OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-    const filePath = await tts.toFile("./temp/audio.mp3", text);
+async function imageRecognition(message) {
+  if (message.attachments.size > 0 && !backendsocket.disconnected) {
+    let imageDetails = '';
+    let promises = [];
 
-    const channel = message.member.voice.channel;
+    for (const attachment of message.attachments.values()) {
+      try {
+        const url = attachment.url;
+        const promise = new Promise((resolve) => {
+          message.channel.sendTyping();
+          backendsocket.emit("imgcaption", url, (val) => {
+            imageDetails += `Attached: image of ${val[0].generated_text}\n`;
+            resolve();
+          });
+        });
+        promises.push(promise);
+      } catch (error) {
+        console.error(error);
+        return message.reply(`❌ Error! Yell at arti.`);
+      };
+    }
 
-    const connection = joinVoiceChannel({
-      channelId: channel.id,
-      guildId: channel.guild.id,
-      adapterCreator: channel.guild.voiceAdapterCreator,
-    });
-
-    const player = createAudioPlayer();
-    const resource = createAudioResource(fs.createReadStream(filePath));
-
-    connection.subscribe(player);
-    player.play(resource);
-
-    player.on('error', error => {
-      console.error(`Audio Error: ${error.message}`);
-    });
+    await Promise.all(promises);
+    return imageDetails;
   } else {
-    message.reply('You need to join a voice channel first!');
+    return "";
   }
+}
+
+async function tts(message, text) {
+  const tts = new MsEdgeTTS();
+  await tts.setMetadata("en-US-AnaNeural", MsEdgeTTS.OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
+  const filePath = await tts.toFile("./temp/audio.mp3", text);
+
+  const channel = message.member.voice.channel;
+
+  const connection = joinVoiceChannel({
+    channelId: channel.id,
+    guildId: channel.guild.id,
+    adapterCreator: channel.guild.voiceAdapterCreator,
+  });
+
+  const player = createAudioPlayer();
+  const resource = createAudioResource(fs.createReadStream(filePath));
+
+  connection.subscribe(player);
+  player.play(resource);
+
+  player.on('error', error => {
+    console.error(`Audio Error: ${error.message}`);
+  });
 }
 
 client.login(process.env.DISCORD);
