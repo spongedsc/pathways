@@ -102,7 +102,7 @@ client.on("messageCreate", async message => {
   try {
     if (backendsocket.disconnected) message.channel.send(`🔕 Backend is not connected. Try again later.`);
     message.channel.sendTyping();
-    enableLocal = await checkLocal();
+    // enableLocal = await checkLocal();
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
@@ -161,17 +161,17 @@ client.on("messageCreate", async message => {
   }
 });
 
-async function checkLocal() {
-  let response;
-  const sendchat = new Promise((resolve) => {
-    backendsocket.emit("localgenenabled", {}, (val) => {
-      response = val;
-      resolve();
-    });
-  });
-  await sendchat;
-  return response;
-}
+// async function checkLocal() {
+//   let response;
+//   const sendchat = new Promise((resolve) => {
+//     backendsocket.emit("localgenenabled", {}, (val) => {
+//       response = val;
+//       resolve();
+//     });
+//   });
+//   await sendchat;
+//   return response;
+// }
 
 async function imageRecognition(message) {
   if (message.attachments.size > 0 && !backendsocket.disconnected) {
