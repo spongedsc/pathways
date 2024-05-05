@@ -102,7 +102,10 @@ client.on("messageCreate", async message => {
   try {
     if (backendsocket.disconnected) message.channel.send(`🔕 Backend is not connected. Try again later.`);
     message.channel.sendTyping();
-    // enableLocal = await checkLocal();
+
+    if (message.content.startsWith("%local")) {
+      enableLocal = !enableLocal;
+      return;
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
