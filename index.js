@@ -61,7 +61,7 @@ function shouldIReply(message) {
 }
 
 async function getPronouns(userid) {
-  // this is spagetti i'm sorry
+  // this is spaghetti i'm sorry
   try {
     const response = await axios.get('/api/v2/lookup', {
       baseURL: 'https://pronoundb.org',
