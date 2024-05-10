@@ -176,26 +176,33 @@ async function checkLocal() {
 async function imageRecognition(message) {
   if (message.attachments.size > 0 && !backendsocket.disconnected) {
     let imageDetails = '';
-    let promises = [];
 
-    for (const attachment of message.attachments.values()) {
-      try {
-        const url = attachment.url;
-        const promise = new Promise((resolve) => {
-          message.channel.sendTyping();
-          backendsocket.emit("imgcaption", url, (val) => {
-            imageDetails += `Attached: image of ${val[0].generated_text}\n`;
-            resolve();
-          });
-        });
-        promises.push(promise);
-      } catch (error) {
-        console.error(error);
-        return message.reply(`❌ Error! Yell at arti.`);
-      };
-    }
+    const res = await fetch(message.attachments[0].url);
+    const blob = await res.arrayBuffer();
+    const input = {
+      image: [...new Uint8Array(blob)],
+      prompt: "Generate a caption for this image",
+      max_tokens: 512,
+    };
 
-    await Promise.all(promises);
+    const accountId = '{ACCOUNT_ID}'; // replace with your account id
+    const apiToken = '{API_TOKEN}'; // replace with your API token
+
+    try {
+      let response = await axios.get({
+        url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/llava-hf/llava-1.5-7b-hf`,
+        headers: {
+          'Authorization': `Bearer ${apiToken}`
+        },
+        data: input
+      });
+
+      imageDetails += `Attached: image of ${response.data.description}\n`;
+    } catch (error) {
+      console.error(error);
+      return message.reply(`❌ Error! Yell at arti.`);
+    };
+
     return imageDetails;
   } else {
     return "";
