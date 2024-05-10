@@ -192,6 +192,7 @@ async function imageRecognition(message) {
       imageDetails += `Attached: image of${response.result.description}\n`;
     } catch (error) {
       console.error(error);
+      return message.reply(`❌ Error in image recognition! Try again later.`);
     };
 
     return imageDetails;
