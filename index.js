@@ -189,7 +189,7 @@ async function imageRecognition(message) {
       });
       response = await response.json();
 
-      imageDetails += `Attached: image of${response.result.description}\n`;
+      imageDetails += `Attached: image of${String(response.result.description).toLowerCase()}\n`;
     } catch (error) {
       console.error(error);
       return message.reply(`❌ Error in image recognition! Try again later.`);
