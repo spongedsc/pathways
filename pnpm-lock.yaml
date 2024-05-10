@@ -32,6 +32,9 @@ importers:
       msedge-tts:
         specifier: ^1.3.4
         version: 1.3.4
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
       socket.io-client:
         specifier: ^4.7.2
         version: 4.7.5
@@ -217,6 +220,10 @@ packages:
   crypto-browserify@3.12.0:
     resolution: {integrity: sha512-fz4spIh+znjO2VjL+IdhEpRJ3YN6sMzITSBijk6FK2UvTqruSQW+/cCZTSNsMiZNvUeq0CqurF+dAbyiGOY6Wg==}
 
+  data-uri-to-buffer@4.0.1:
+    resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
+    engines: {node: '>= 12'}
+
   debug@4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -267,6 +274,10 @@ packages:
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
+  fetch-blob@3.2.0:
+    resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
+    engines: {node: ^12.20 || >= 14.13}
+
   ffmpeg-static@5.2.0:
     resolution: {integrity: sha512-WrM7kLW+do9HLr+H6tk7LzQ7kPqbAgLjdzNE32+u3Ff11gXt9Kkkd2nusGFrlWMIe+XaA97t+I8JS7sZIrvRgA==}
     engines: {node: '>=16'}
@@ -287,6 +298,10 @@ packages:
   form-data@4.0.0:
     resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
     engines: {node: '>= 6'}
+
+  formdata-polyfill@4.0.10:
+    resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
+    engines: {node: '>=12.20.0'}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -407,6 +422,14 @@ packages:
 
   msedge-tts@1.3.4:
     resolution: {integrity: sha512-0dj86Gg9VzdOJZVCkSSK/O5Eg0NM9W5p8LsXAEPe7qUmsvdAugPUTcPwt9tyz4GThAzAFBBu554kevH8StLEHQ==}
+
+  node-domexception@1.0.0:
+    resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
+    engines: {node: '>=10.5.0'}
+
+  node-fetch@3.3.2:
+    resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   nodemon@3.1.0:
     resolution: {integrity: sha512-xqlktYlDMCepBJd43ZQhjWwMw2obW/JRvkrLxq5RCNcuDDX1DbcPT+qT1IlIIdf+DhnWs90JpTMe+Y5KxOchvA==}
@@ -562,6 +585,10 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  web-streams-polyfill@3.3.3:
+    resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
+    engines: {node: '>= 8'}
 
   ws@8.11.0:
     resolution: {integrity: sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg==}
@@ -859,9 +886,12 @@ snapshots:
       randombytes: 2.1.0
       randomfill: 1.0.4
 
+  data-uri-to-buffer@4.0.1: {}
+
   debug@4.3.4(supports-color@5.5.0):
     dependencies:
       ms: 2.1.2
+    optionalDependencies:
       supports-color: 5.5.0
 
   delayed-stream@1.0.0: {}
@@ -934,6 +964,11 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
+  fetch-blob@3.2.0:
+    dependencies:
+      node-domexception: 1.0.0
+      web-streams-polyfill: 3.3.3
+
   ffmpeg-static@5.2.0:
     dependencies:
       '@derhuerst/http-basic': 8.2.4
@@ -954,6 +989,10 @@ snapshots:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+
+  formdata-polyfill@4.0.10:
+    dependencies:
+      fetch-blob: 3.2.0
 
   fsevents@2.3.3:
     optional: true
@@ -1080,6 +1119,14 @@ snapshots:
       - debug
       - utf-8-validate
 
+  node-domexception@1.0.0: {}
+
+  node-fetch@3.3.2:
+    dependencies:
+      data-uri-to-buffer: 4.0.1
+      fetch-blob: 3.2.0
+      formdata-polyfill: 4.0.10
+
   nodemon@3.1.0:
     dependencies:
       chokidar: 3.6.0
@@ -1121,7 +1168,7 @@ snapshots:
   picomatch@2.3.1: {}
 
   prism-media@1.3.5(ffmpeg-static@5.2.0):
-    dependencies:
+    optionalDependencies:
       ffmpeg-static: 5.2.0
 
   process-nextick-args@2.0.1: {}
@@ -1252,6 +1299,8 @@ snapshots:
       '@fastify/busboy': 2.1.0
 
   util-deprecate@1.0.2: {}
+
+  web-streams-polyfill@3.3.3: {}
 
   ws@8.11.0: {}
 
