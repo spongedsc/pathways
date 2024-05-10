@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { DateTime } from 'luxon';
 import axios from 'axios';
+import fetch from 'node-fetch';
 
 import { io } from "socket.io-client";
 import { MsEdgeTTS } from "msedge-tts";
@@ -174,31 +175,36 @@ async function checkLocal() {
 }
 
 async function imageRecognition(message) {
-  if (message.attachments.size > 0 && !backendsocket.disconnected) {
+  if (message.attachments.size > 0) {
     let imageDetails = '';
-    let promises = [];
 
-    for (const attachment of message.attachments.values()) {
-      try {
-        const url = attachment.url;
-        const promise = new Promise((resolve) => {
-          message.channel.sendTyping();
-          backendsocket.emit("imgcaption", url, (val) => {
-            imageDetails += `Attached: image of ${val[0].generated_text}\n`;
-            resolve();
-          });
-        });
-        promises.push(promise);
-      } catch (error) {
-        console.error(error);
-        return message.reply(`❌ Error! Yell at arti.`);
-      };
-    }
+    const res = await fetch(message.attachments.first().url);
+    const blob = await res.arrayBuffer();
+    const input = {
+      image: [...new Uint8Array(blob)],
+      prompt: "Generate a caption for this image",
+      max_tokens: 512,
+    };
 
-    await Promise.all(promises);
+    try {
+      let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/llava-hf/llava-1.5-7b-hf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.CF_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(input)
+      });
+      response = await response.json();
+
+      imageDetails += `Attached: image of${response.result.description}\n`;
+    } catch (error) {
+      console.error(error);
+    };
+
     return imageDetails;
   } else {
-    return "";
+    return '';
   }
 }
 
