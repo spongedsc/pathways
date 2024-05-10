@@ -4,7 +4,6 @@ import { joinVoiceChannel, createAudioPlayer, createAudioResource } from '@disco
 import fs from 'fs';
 import path from 'path';
 import { DateTime } from 'luxon';
-import axios from 'axios';
 import fetch from 'node-fetch';
 
 import { io } from "socket.io-client";
@@ -64,30 +63,23 @@ function shouldIReply(message) {
 async function getPronouns(userid) {
   // this is spagetti i'm sorry
   try {
-    const response = await axios.get('/api/v2/lookup', {
-      baseURL: 'https://pronoundb.org',
-      params: {
-        platform: 'discord',
-        ids: userid
-      }
-    });
+    let response = await fetch(`https://pronoundb.org/api/v2/lookup?platform=discord&ids=${userid}`);
 
-    let pronounsresponse = response.data;
+    response = await response.json();
 
 
-
-    for (let userId in pronounsresponse) {
-      if (pronounsresponse[userId].sets.hasOwnProperty('en')) {
-        pronounsresponse[userId] = pronounsresponse[userId].sets['en'].join('/');
+    for (let userId in response) {
+      if (response[userId].sets.hasOwnProperty('en')) {
+        response[userId] = response[userId].sets['en'].join('/');
       } else {
-        pronounsresponse[userId] = 'they/them';
+        response[userId] = 'they/them';
       }
     }
-    if (!pronounsresponse.hasOwnProperty(userid)) {
-      pronounsresponse[userid] = 'they/them';
+    if (!response.hasOwnProperty(userid)) {
+      response[userid] = 'they/them';
     }
 
-    return pronounsresponse[userid];
+    return response[userid];
   } catch (error) {
     console.error(error);
   }
