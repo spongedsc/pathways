@@ -89,6 +89,9 @@ let lastMessage = "";
 let enableLocal = false;
 
 client.on("messageCreate", async message => {
+  let content = message.content
+  let msg_id = message.id;
+  let author_un = message.author.username;
   if (message.author.bot) return;
   if (!shouldIReply(message)) return;
 
@@ -115,7 +118,7 @@ client.on("messageCreate", async message => {
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        if (reply.author.id == "954288870244114473") {
+        if (reply.author.id == "954288870244114473") {  // FIXME
           formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
         } else {
           formattedUserMessage = `> ${reply.author.username}: ${reply}\n${formattedUserMessage}`;
@@ -140,9 +143,19 @@ client.on("messageCreate", async message => {
       message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
-
+    
     // Send AI response
-    message.reply({ content: `${response}`, failIfNotExists: false });
+    let no_longer_exists = false;
+    try {
+      message.channel.messages.fetch(message.id);
+    } except(e) {
+      console.warn(e);
+      no_longer_exists = true;
+      message.reply({ content: `\`\`\`\n${author_un}: ${content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
+    }
+    if (!no_longer_exists) {
+      message.reply({ content: `${response}`, failIfNotExists: false });
+    }
 
     // tts!
     if (message.member.voice.channel) {
