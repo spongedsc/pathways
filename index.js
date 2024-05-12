@@ -115,7 +115,7 @@ client.on("messageCreate", async message => {
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        if (reply.author.id == "954288870244114473") {
+        if (reply.author.id == client.user.id) {
           formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
         } else {
           formattedUserMessage = `> ${reply.author.username}: ${reply}\n${formattedUserMessage}`;
@@ -142,7 +142,17 @@ client.on("messageCreate", async message => {
     }
 
     // Send AI response
-    message.reply({ content: `${response}`, failIfNotExists: false });
+    let no_longer_exists = false;
+    try {
+      await message.channel.messages.fetch(message.id);
+    } catch (e) {
+      console.warn(e);
+      no_longer_exists = true;
+      message.reply({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
+    }
+    if (!no_longer_exists) {
+      message.reply({ content: `${response}`, failIfNotExists: false });
+    }
 
     // tts!
     if (message.member.voice.channel) {
