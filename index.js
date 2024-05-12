@@ -143,7 +143,7 @@ client.on("messageCreate", async message => {
       message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
-    
+
     // Send AI response
     let no_longer_exists = false;
     try {
