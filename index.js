@@ -115,7 +115,7 @@ client.on("messageCreate", async message => {
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
     if (message.reference) {
       await message.fetchReference().then(async (reply) => {
-        if (reply.author.id == "954288870244114473") {  // FIXME
+        if (reply.author.id == client.user.id) {
           formattedUserMessage = `> ${reply}\n${formattedUserMessage}`;
         } else {
           formattedUserMessage = `> ${reply.author.username}: ${reply}\n${formattedUserMessage}`;
