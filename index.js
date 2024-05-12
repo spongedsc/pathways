@@ -147,7 +147,7 @@ client.on("messageCreate", async message => {
     // Send AI response
     let no_longer_exists = false;
     try {
-      message.channel.messages.fetch(message.id);
+      message.channel.messages.fetch(msg_id);
     } catch(e) {
       console.warn(e);
       no_longer_exists = true;
