@@ -148,7 +148,7 @@ client.on("messageCreate", async message => {
     let no_longer_exists = false;
     try {
       message.channel.messages.fetch(message.id);
-    } except(e) {
+    } catch(e) {
       console.warn(e);
       no_longer_exists = true;
       message.reply({ content: `\`\`\`\n${author_un}: ${content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
