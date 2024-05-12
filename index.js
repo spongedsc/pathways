@@ -89,9 +89,6 @@ let lastMessage = "";
 let enableLocal = false;
 
 client.on("messageCreate", async message => {
-  let content = message.content
-  let msg_id = message.id;
-  let author_un = message.author.username;
   if (message.author.bot) return;
   if (!shouldIReply(message)) return;
 
@@ -147,11 +144,11 @@ client.on("messageCreate", async message => {
     // Send AI response
     let no_longer_exists = false;
     try {
-      message.channel.messages.fetch(message.id);
-    } except(e) {
+      await message.channel.messages.fetch(message.id);
+    } catch (e) {
       console.warn(e);
       no_longer_exists = true;
-      message.reply({ content: `\`\`\`\n${author_un}: ${content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
+      message.reply({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
     }
     if (!no_longer_exists) {
       message.reply({ content: `${response}`, failIfNotExists: false });
