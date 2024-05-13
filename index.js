@@ -142,16 +142,10 @@ client.on("messageCreate", async message => {
     }
 
     // Send AI response
-    let no_longer_exists = false;
     try {
-      await message.channel.messages.fetch(message.id);
+      await message.reply({ content: `${response}`, failIfNotExists: true });
     } catch (e) {
-      console.warn(e);
-      no_longer_exists = true;
-      message.reply({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}`, failIfNotExists: false });
-    }
-    if (!no_longer_exists) {
-      message.reply({ content: `${response}`, failIfNotExists: false });
+      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}` });
     }
 
     // tts!
