@@ -214,13 +214,13 @@ async function imageGen(message) {
   const prompt = message.content.split(' ').slice(1).join(' ');
 
   try {
-    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/bytedance/stable-diffusion-xl-lightning`, {
+    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/lykon/dreamshaper-8-lcm`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.CF_TOKEN}`,
       },
       body: JSON.stringify({
-        prompt: `spongebob, ${prompt}`
+        prompt: `${prompt}, spongebob`
       })
     });
     response = await response.arrayBuffer();
