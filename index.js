@@ -109,6 +109,11 @@ client.on("messageCreate", async message => {
       return;
     }
 
+    if (message.content.startsWith("%pic")) {
+      imageGen(message);
+      return;
+    }
+
     let imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
@@ -203,6 +208,28 @@ async function imageRecognition(message) {
   } else {
     return '';
   }
+}
+
+async function imageGen(message) {
+  const prompt = message.content.split(' ').slice(1).join(' ');
+
+  try {
+    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/bytedance/stable-diffusion-xl-lightning`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.CF_TOKEN}`,
+      },
+      body: JSON.stringify({
+        prompt: `Spongebob taking a selfie, ${prompt}`
+      })
+    });
+    response = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(response);
+    message.channel.send({ files: [imageBuffer] });
+  } catch (error) {
+    console.error(error);
+    return message.reply(`❌ Error in image generation! Try again later.`);
+  };
 }
 
 async function tts(message, text) {
