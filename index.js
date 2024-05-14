@@ -125,23 +125,18 @@ client.on("messageCreate", async message => {
 
     message.channel.sendTyping();
     history.push({ role: "user", content: formattedUserMessage });
-    const input = {
-      messages: history,
-      max_tokens: 512,
-    };
-    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/meta/llama-3-8b-instruct`, {
+    const input = history;
+    let response = await fetch(`https://wcln-ai.twostoryapps.com/letschat`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.CF_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(input)
     });
     response = await response.json();
-    response = response.result.response
+    response = response.data.choices[0].message.content.trim()
     history.push({ role: "assistant", content: response });
-    if (history.length > 14) {
-      history.shift();
+    if (history.length % 10 === 0) {
       history.push({ role: "system", content: "System Reminder: You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },);
     }
 
