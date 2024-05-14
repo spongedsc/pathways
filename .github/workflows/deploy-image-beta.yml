@@ -3,8 +3,7 @@ name: Deploy Beta Docker Image to GHCR
 on:
   push:
     branches:
-      - beta
-      - staging
+      - v2
   workflow_dispatch:
 
 jobs:
