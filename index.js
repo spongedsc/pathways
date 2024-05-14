@@ -141,6 +141,8 @@ client.on("messageCreate", async message => {
     response = response.result.response
     history.push({ role: "assistant", content: response });
 
+    if (response == "") return message.reply(`❌ AI returned an empty response! Yell at someone idk.`);
+
     // Handle long responses
     if (response.length >= 2000) {
       fs.writeFileSync(path.resolve('./temp/how.txt'), response);
