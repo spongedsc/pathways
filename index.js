@@ -78,9 +78,9 @@ async function getPronouns(userid) {
 
 let lastMessage = "";
 let initialHistory = [
-  { role: "system", content: "You are roleplaying as SpongeAss. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },
-  { role: "user", content: "gyl_. (they/them) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
-  { role: "assistant", content: "hi gyl_! how are you today~ :3" },
+  { role: "system", content: "You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },
+  { role: "user", content: "ocaminty (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
+  { role: "assistant", content: "hi oca! how are you today~ :3" }
 ];
 let history = initialHistory;
 
@@ -127,7 +127,7 @@ client.on("messageCreate", async message => {
     history.push({ role: "user", content: formattedUserMessage });
     let input = {
       messages: history,
-      max_tokens: 256,
+      max_tokens: 512,
     };
     let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/meta/llama-3-8b-instruct`, {
       method: 'POST',
