@@ -125,7 +125,10 @@ client.on("messageCreate", async message => {
 
     message.channel.sendTyping();
     history.push({ role: "user", content: formattedUserMessage });
-    const input = history;
+    const input = {
+      "messages": history
+    }
+      ;
     // !! this endpoint usage is purely for education! this code should not be run like this!
     let response = await fetch(`https://wcln-ai.twostoryapps.com/letschat`, {
       method: 'POST',
