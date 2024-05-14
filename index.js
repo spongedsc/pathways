@@ -6,7 +6,6 @@ import path from 'path';
 import { DateTime } from 'luxon';
 import fetch from 'node-fetch';
 
-import { io } from "socket.io-client";
 import { MsEdgeTTS } from "msedge-tts";
 
 import * as dotenv from 'dotenv'
@@ -14,10 +13,6 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 const channels = process.env.CHANNELIDS.split(",");
-
-const backendsocket = io(process.env.BACKEND_URL, {
-  transports: ['websocket']
-});
 
 const client = new Client({
   intents: [
@@ -28,10 +23,6 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates,
   ],
   allowedMentions: { parse: [], repliedUser: false }
-});
-
-backendsocket.on("connect_error", (err) => {
-  console.error(`Error connecting to backend: ${err.message}`);
 });
 
 if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
@@ -85,21 +76,24 @@ async function getPronouns(userid) {
   }
 }
 
+const initialHistory = [
+  { role: "system", content: "You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },
+  { role: "user", content: "ocaminty (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
+  { role: "assistant", content: "hi oca! how are you today~ :3" }
+];
 let lastMessage = "";
-let enableLocal = false;
+let history = initialHistory;
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!shouldIReply(message)) return;
 
   try {
-    if (backendsocket.disconnected) message.channel.send(`🔕 Backend is not connected. Try again later.`);
     message.channel.sendTyping();
-    enableLocal = await checkLocal();
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
-      backendsocket.emit("newchat", null);
+      history = initialHistory;
       message.reply(`♻️ Conversation history reset.`);
       return;
     }
@@ -114,7 +108,7 @@ client.on("messageCreate", async message => {
       return;
     }
 
-    let imageDetails = await imageRecognition(message)
+    const imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
@@ -129,15 +123,23 @@ client.on("messageCreate", async message => {
     };
     lastMessage = formattedUserMessage;
 
-    let response;
     message.channel.sendTyping();
-    const sendchat = new Promise((resolve) => {
-      backendsocket.emit("chat", { "message": formattedUserMessage, "textgenwui": enableLocal }, (val) => {
-        response = val;
-        resolve();
-      });
+    history.push({ role: "user", content: formattedUserMessage });
+    const input = {
+      messages: history,
+      max_tokens: 512,
+    };
+    let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/meta/llama-3-8b-instruct`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.CF_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(input)
     });
-    await sendchat;
+    response = await response.json();
+    response = response.result.response
+    history.push({ role: "assistant", content: response });
 
     // Handle long responses
     if (response.length >= 2000) {
@@ -163,18 +165,6 @@ client.on("messageCreate", async message => {
   }
 });
 
-async function checkLocal() {
-  let response;
-  const sendchat = new Promise((resolve) => {
-    backendsocket.emit("localgenenabled", {}, (val) => {
-      response = val;
-      resolve();
-    });
-  });
-  await sendchat;
-  return response;
-}
-
 async function imageRecognition(message) {
   if (message.attachments.size > 0) {
     let imageDetails = '';
@@ -184,7 +174,7 @@ async function imageRecognition(message) {
     const input = {
       image: [...new Uint8Array(blob)],
       prompt: "Generate a caption for this image",
-      max_tokens: 512,
+      max_tokens: 256,
     };
 
     try {
