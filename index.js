@@ -149,7 +149,12 @@ client.on("messageCreate", async message => {
     }
 
     // Send AI response
-    await message.reply({ content: `${response}`, failIfNotExists: true });
+    try {
+      await message.reply({ content: `${response}`, failIfNotExists: true });
+    } catch (e) {
+      console.log(e);
+      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}` });
+    }
 
     // tts!
     if (message.member.voice.channel) {
