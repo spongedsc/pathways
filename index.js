@@ -140,6 +140,10 @@ client.on("messageCreate", async message => {
     response = await response.json();
     response = response.result.response
     history.push({ role: "assistant", content: response });
+    if (history.length > 14) {
+      history.shift();
+      history.push({ role: "system", content: "System Reminder: You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },);
+    }
 
     if (response == "") return message.reply(`❌ AI returned an empty response! Yell at someone idk.`);
 
