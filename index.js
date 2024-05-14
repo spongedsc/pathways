@@ -76,12 +76,12 @@ async function getPronouns(userid) {
   }
 }
 
-let lastMessage = "";
-let initialHistory = [
+const initialHistory = [
   { role: "system", content: "You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },
   { role: "user", content: "ocaminty (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
   { role: "assistant", content: "hi oca! how are you today~ :3" }
 ];
+let lastMessage = "";
 let history = initialHistory;
 
 client.on("messageCreate", async message => {
@@ -108,7 +108,7 @@ client.on("messageCreate", async message => {
       return;
     }
 
-    let imageDetails = await imageRecognition(message)
+    const imageDetails = await imageRecognition(message)
 
     // Send message to CharacterAI
     let formattedUserMessage = `${message.author.username} (${await getPronouns(message.author.id)}) on ${DateTime.now().setZone('utc').toLocaleString(DateTime.DATETIME_FULL)}: ${message.content}\n${imageDetails}`;
@@ -125,7 +125,7 @@ client.on("messageCreate", async message => {
 
     message.channel.sendTyping();
     history.push({ role: "user", content: formattedUserMessage });
-    let input = {
+    const input = {
       messages: history,
       max_tokens: 512,
     };
