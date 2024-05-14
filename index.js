@@ -38,9 +38,10 @@ if (!fs.existsSync('./temp')) fs.mkdirSync('./temp');
 
 // Map to store the last message timestamp per person
 const cooldowns = new Map();
+const session_id = Math.random().toString().replace("0.","");
 
 client.on("ready", async () => {
-  console.log(`Ready! Logged in as ${client.user.tag}`);
+  console.log(`Ready! Logged in as ${client.user.tag} ID ${session_id}`);
   client.user.setActivity(`uwu`);
 });
 
@@ -100,12 +101,12 @@ client.on("messageCreate", async message => {
     // Conversation reset
     if (message.content.startsWith("%reset")) {
       backendsocket.emit("newchat", null);
-      message.reply(`♻️ Conversation history reset.`);
+      message.reply(`[${session_id}] ♻️ Conversation history reset.`);
       return;
     }
 
     if (message.content.startsWith("%readback")) {
-      message.reply(`\`${lastMessage}\``);
+      message.reply(`[${session_id}] \`${lastMessage}\``);
       return;
     }
 
@@ -148,9 +149,9 @@ client.on("messageCreate", async message => {
 
     // Send AI response
     try {
-      await message.reply({ content: `${response}`, failIfNotExists: true });
+      await message.reply({ content: `[${session_id}] ${response}`, failIfNotExists: true });
     } catch (e) {
-      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}` });
+      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n[${session_id}] ${response}` });
     }
 
     // tts!
@@ -159,7 +160,7 @@ client.on("messageCreate", async message => {
     }
   } catch (error) {
     console.error(error);
-    return message.reply(`❌ Error! Yell at arti.`);
+    return message.reply(`[${session_id}] ❌ Error! Yell at arti.`);
   }
 });
 
@@ -201,7 +202,7 @@ async function imageRecognition(message) {
       imageDetails += `Attached: image of${String(response.result.description).toLowerCase()}\n`;
     } catch (error) {
       console.error(error);
-      return message.reply(`❌ Error in image recognition! Try again later.`);
+      return message.reply(`[${session_id}] ❌ Error in image recognition! Try again later.`);
     };
 
     return imageDetails;
@@ -225,10 +226,10 @@ async function imageGen(message) {
     });
     response = await response.arrayBuffer();
     const imageBuffer = Buffer.from(response);
-    message.reply({ files: [imageBuffer] });
+    message.reply({ content: `[${session_id}]`, files: [imageBuffer] });
   } catch (error) {
     console.error(error);
-    return message.reply(`❌ Error in image generation! Try again later.`);
+    return message.reply(`[${session_id}] ❌ Error in image generation! Try again later.`);
   };
 }
 
