@@ -1,6 +1,6 @@
 {
   "name": "spongegpt",
-  "version": "1.31.1",
+  "version": "1.32.0",
   "description": "custom AI chatbot for discord",
   "main": "index.js",
   "type": "module",

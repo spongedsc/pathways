@@ -145,9 +145,9 @@ client.on("messageCreate", async message => {
 
     if (response == "") return message.reply(`❌ AI returned an empty response! Yell at someone idk.`);
 
-    let parts = response.split("#gen");
+    let parts = response.split("!gen");
 
-    let trimmedResponse = parts[0].trim(); // The part before "#gen"
+    let trimmedResponse = parts[0].trim();
 
     // Handle long responses
     if (trimmedResponse.length >= 2000) {
@@ -164,7 +164,7 @@ client.on("messageCreate", async message => {
       console.log(e);
       sentMessage = await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${trimmedResponse}` });
     }
-    if (response.includes("#gen")) {
+    if (response.includes("!gen")) {
       selfImageGen(message, response, sentMessage);
     }
 
@@ -214,10 +214,10 @@ async function imageRecognition(message) {
 }
 
 async function selfImageGen(message, response, sentMessage) {
-  let parts = response.split("#gen");
+  let parts = response.split("!gen");
 
-  let partBeforeGen = parts[0].trim(); // The part before "#gen"
-  let partAfterGen = parts[1].trim().replace('[', '').replace(']', ''); // The part after "#gen", without brackets
+  let partBeforeGen = parts[0].trim();
+  let partAfterGen = parts[1].trim().replace('[', '').replace(']', '');
 
   try {
     let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/lykon/dreamshaper-8-lcm`, {
