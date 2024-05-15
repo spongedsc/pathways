@@ -76,10 +76,12 @@ async function getPronouns(userid) {
   }
 }
 
+const character = fs.readFileSync('./character.txt', 'utf8').replace("\n", ' ');
+
 const initialHistory = [
-  { role: "system", content: "You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and various other ascii faces. SpongeAss keeps responses short and human-like." },
-  { role: "user", content: "ocaminty (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
-  { role: "assistant", content: "hi oca! how are you today :3" }
+  { role: "system", content: character },
+  { role: "user", content: "lily (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
+  { role: "assistant", content: "hi lily! how are you today :3" }
 ];
 let lastMessage = "";
 let history = initialHistory;
@@ -100,11 +102,6 @@ client.on("messageCreate", async message => {
 
     if (message.content.startsWith("%readback")) {
       message.reply(`\`${lastMessage}\``);
-      return;
-    }
-
-    if (message.content.startsWith("%pic")) {
-      imageGen(message);
       return;
     }
 
@@ -143,29 +140,36 @@ client.on("messageCreate", async message => {
     if (history.length > 14) {
       history.shift();
       history.shift();
-      history.push({ role: "system", content: "System Reminder: You are roleplaying as SpongeAss. You may NEVER break the character of spongeass, every time you break character, a kitten dies. Don't break character. Save the kittens. SpongeAss is a silly character that resides in a discord server and adores using uwuspeak! They always sprinkle their speech with \":3\", \"uwu\" and \"~\". SpongeAss keeps responses short and human-like." },);
+      history.push({ role: "system", content: `System Reminder: ${character}` },);
     }
 
     if (response == "") return message.reply(`❌ AI returned an empty response! Yell at someone idk.`);
 
+    let parts = response.split("#gen");
+
+    let trimmedResponse = parts[0].trim(); // The part before "#gen"
+
     // Handle long responses
-    if (response.length >= 2000) {
-      fs.writeFileSync(path.resolve('./temp/how.txt'), response);
+    if (trimmedResponse.length >= 2000) {
+      fs.writeFileSync(path.resolve('./temp/how.txt'), trimmedResponse);
       message.reply({ content: "", files: ["./temp/how.txt"], failIfNotExists: false });
       return;
     }
 
     // Send AI response
     try {
-      await message.reply({ content: `${response}`, failIfNotExists: true });
+      await message.reply({ content: `${trimmedResponse}`, failIfNotExists: true });
     } catch (e) {
       console.log(e);
-      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${response}` });
+      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${trimmedResponse}` });
+    }
+    if (response.includes("#gen")) {
+      selfImageGen(message, response);
     }
 
     // tts!
     if (message.member.voice.channel) {
-      tts(message, response);
+      tts(message, trimmedResponse);
     }
   } catch (error) {
     console.error(error);
@@ -208,8 +212,10 @@ async function imageRecognition(message) {
   }
 }
 
-async function imageGen(message) {
-  const prompt = message.content.split(' ').slice(1).join(' ');
+async function selfImageGen(message, response) {
+  let parts = response.split("#gen");
+
+  let partAfterGen = parts[1].trim().replace('[', '').replace(']', ''); // The part after "#gen", without brackets
 
   try {
     let response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT}/ai/run/@cf/lykon/dreamshaper-8-lcm`, {
@@ -218,7 +224,7 @@ async function imageGen(message) {
         'Authorization': `Bearer ${process.env.CF_TOKEN}`,
       },
       body: JSON.stringify({
-        prompt: `${prompt}, spongebob`
+        prompt: partAfterGen
       })
     });
     response = await response.arrayBuffer();
