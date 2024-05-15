@@ -81,7 +81,9 @@ const character = fs.readFileSync('./character.txt', 'utf8').replace("\n", ' ');
 const initialHistory = [
   { role: "system", content: character },
   { role: "user", content: "lily (she/her) on May 14, 2024 at 12:55 AM UTC: hi sponge" },
-  { role: "assistant", content: "hi lily! how are you today :3" }
+  { role: "assistant", content: "hi lily! how are you today :3" },
+  { role: "user", content: "zynsterr (they/them) on May 14, 2024 at 3:02 PM UTC: generate me an image of cheese puffs" },
+  { role: "assistant", content: "sure thing!\n!gen picture of a bowl of cheese puffs on a table" }
 ];
 let lastMessage = "";
 let history = initialHistory;
