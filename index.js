@@ -157,14 +157,15 @@ client.on("messageCreate", async message => {
     }
 
     // Send AI response
+    let sentMessage
     try {
-      await message.reply({ content: `${trimmedResponse}`, failIfNotExists: true });
+      sentMessage = await message.reply({ content: `${trimmedResponse}`, failIfNotExists: true });
     } catch (e) {
       console.log(e);
-      await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${trimmedResponse}` });
+      sentMessage = await message.channel.send({ content: `\`\`\`\n${message.author.username}: ${message.content}\n\`\`\`\n\n${trimmedResponse}` });
     }
     if (response.includes("#gen")) {
-      selfImageGen(message, response);
+      selfImageGen(message, response, sentMessage);
     }
 
     // tts!
@@ -212,9 +213,10 @@ async function imageRecognition(message) {
   }
 }
 
-async function selfImageGen(message, response) {
+async function selfImageGen(message, response, sentMessage) {
   let parts = response.split("#gen");
 
+  let partBeforeGen = parts[0].trim(); // The part before "#gen"
   let partAfterGen = parts[1].trim().replace('[', '').replace(']', ''); // The part after "#gen", without brackets
 
   try {
@@ -229,7 +231,7 @@ async function selfImageGen(message, response) {
     });
     response = await response.arrayBuffer();
     const imageBuffer = Buffer.from(response);
-    message.reply({ files: [imageBuffer] });
+    sentMessage.edit({ content: partBeforeGen, files: [imageBuffer] });
   } catch (error) {
     console.error(error);
     return message.reply(`❌ Error in image generation! Try again later.`);
