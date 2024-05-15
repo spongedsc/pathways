@@ -97,8 +97,8 @@ client.on("messageCreate", async message => {
 
     // Conversation reset
     if (message.content.startsWith("%reset")) {
-      history = initialHistory;
       message.reply(`♻️ Conversation history reset.`);
+      history = initialHistory
       return;
     }
 
@@ -139,10 +139,8 @@ client.on("messageCreate", async message => {
     response = await response.json();
     response = response.result.response
     history.push({ role: "assistant", content: response });
-    if (history.length > 14) {
-      history.shift();
-      history.shift();
-      history.push({ role: "system", content: `System Reminder: ${character}` },);
+    if (history.length % 20 == 0) {
+      history.push({ role: "system", content: `reminder: ${character}` },);
     }
 
     if (response == "") return message.reply(`❌ AI returned an empty response! Yell at someone idk.`);
