@@ -132,17 +132,17 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (!shouldIReply(message)) return;
 
-  const store = historyStore.getState();
+  const store = () => historyStore.getState();
 
   try {
     // Conversation reset
     if (message.content.startsWith("%reset")) {
       const totalAmountToReset =
-        store?.history?.length - initialHistory?.length;
+        store()?.history?.length - initialHistory?.length;
       const initialResetReply = await message.reply(
         `♻️ Conversation history reset (clearing ${totalAmountToReset} entries).`
       );
-      store?.reset();
+      store()?.reset();
       initialResetReply.edit({
         content: `♻️ Conversation history reset (cleared ${totalAmountToReset} entries).`,
       });
@@ -151,7 +151,7 @@ client.on("messageCreate", async (message) => {
 
     if (message.content.startsWith("%messages")) {
       message.reply(
-        `ℹ️ ${store?.history?.length - initialHistory?.length} entries exist.`
+        `ℹ️ ${store()?.history?.length - initialHistory?.length} entries exist.`
       );
       return;
     }
@@ -185,9 +185,9 @@ client.on("messageCreate", async (message) => {
 
     message.channel.sendTyping();
 
-    store.addMessage({ role: "user", content: formattedUserMessage });
+    store().addMessage({ role: "user", content: formattedUserMessage });
     const input = {
-      messages: store.history,
+      messages: store().history,
       max_tokens: 512,
     };
     let response = await fetch(
@@ -203,9 +203,9 @@ client.on("messageCreate", async (message) => {
     );
     response = await response.json();
     response = response.result.response;
-    store.addMessage({ role: "assistant", content: response });
-    if (store.history.length % 20 == 0) {
-      store.addMessage({ role: "system", content: `reminder: ${character}` });
+    store().addMessage({ role: "assistant", content: response });
+    if (store().history.length % 20 == 0) {
+      store().addMessage({ role: "system", content: `reminder: ${character}` });
     }
 
     if (response == "")
