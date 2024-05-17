@@ -1,9 +1,8 @@
-FROM oven/bun:alpine
+FROM imbios/bun-node:20-alpine
 ENV NODE_ENV=PRODUCTION
 
-COPY --from=node:lts-alpine /usr/local/bin/node /usr/bin/node
-
 WORKDIR /app
+
 
 COPY ["package.json", "bun.lockb", "./"]
 
