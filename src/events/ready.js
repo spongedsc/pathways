@@ -34,8 +34,8 @@ export default {
 
 		const silentSaved = await client.kv
 			.get("silentMode")
-			.then((s) => (s == "true" ? true : false))
-			.then(() => false);
+			.then((s) => s == "true")
+			.catch(() => false);
 
 		client.tempStore.set("silentMode", silentSaved);
 
