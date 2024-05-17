@@ -1,4 +1,5 @@
-import { Events } from 'discord.js';
+import { Events } from "discord.js";
+import chalk from "chalk";
 
 /**
  * @param {Map<string, import('../commands/index.js').Command>} commands
@@ -18,12 +19,28 @@ export function registerEvents(commands, events, client) {
 					throw new Error(`Command '${interaction.commandName}' not found.`);
 				}
 
-				await command.execute(interaction);
+				await command.execute(interaction).catch((e) => {
+					console.log(
+						`${chalk.bold.red("Command")} exception (${interaction.commandName}): \n`,
+						e,
+						` ${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })}`,
+					);
+				});
 			}
 		},
 	};
 
 	for (const event of [...events, interactionCreateEvent]) {
-		client[event.once ? 'once' : 'on'](event.name, async (...args) => event.execute(...args));
+		client[event.once ? "once" : "on"](event.name, async (...args) => {
+			try {
+				return event.execute(...args);
+			} catch (e) {
+				console.log(
+					`${chalk.bold.red("Event")} exception (${event?.name}): \n`,
+					e,
+					` ${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })}`,
+				);
+			}
+		});
 	}
 }

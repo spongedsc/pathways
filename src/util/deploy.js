@@ -5,6 +5,8 @@ import { REST } from 'discord.js';
 import { Environment } from './helpers.js';
 import { loadCommands } from './loaders.js';
 
+import chalk from 'chalk';
+
 export const cmdRollout = async () => {
 	const env = new Environment();
 
@@ -23,5 +25,7 @@ export const cmdRollout = async () => {
 				)
 			: await api.applicationCommands.bulkOverwriteGlobalCommands(process.env.APPLICATION_ID, commandData);
 
-	console.log(`Successfully registered ${result.length} commands.`);
+	console.log(
+		`${chalk.bold.green('Core')} Successfully registered ${chalk.bold(result.length)} commands (${Temporal.Now.instant().toLocaleString('en-GB', { timeZone: 'Etc/UTC', timeZoneName: 'short' })})`,
+	);
 };
