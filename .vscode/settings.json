@@ -9,5 +9,8 @@
 	"editor.trimAutoWhitespace": false,
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-	"npm.packageManager": "pnpm"
+	"npm.packageManager": "pnpm",
+	"[dockercompose]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
+	}
 }
