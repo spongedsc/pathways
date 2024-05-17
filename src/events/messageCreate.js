@@ -118,16 +118,13 @@ const callTextChannel = async ({ client, message }) => {
 	}
 };
 
-const callThreadChannel = async ({ client, message }) => {
-	message.reply("herro").catch(() => null);
-};
-
 /** @type {import('./index.js').Event<Events.MessageCreate>} */
 export default {
 	name: Events.MessageCreate,
 	// once: false,
 	async execute(message) {
 		const client = message.client;
+		if (message.author.bot) return;
 		if (message.author?.id === client.user.id) return;
 		if (message?.channel === null) return;
 		if (message.channel.type === ChannelType.GuildText) {
