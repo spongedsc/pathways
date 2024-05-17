@@ -1,7 +1,7 @@
 FROM oven/bun:alpine
 ENV NODE_ENV=PRODUCTION
 
-COPY --from=node:lts /usr/local/bin/node /usr/bin/node
+COPY --from=node:lts-alpine /usr/local/bin/node /usr/bin/node
 
 WORKDIR /app
 
