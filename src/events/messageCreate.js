@@ -132,7 +132,7 @@ export default {
 	// once: false,
 	async execute(message) {
 		const client = message.client;
-		if (message.member.id === client.user.id) return;
+		if (message.author?.id === client.user.id) return;
 		if (message?.channel === null) return;
 		if (message.channel.type === ChannelType.GuildText) {
 			void callTextChannel({ client, message });
