@@ -1,11 +1,11 @@
-> :warning: you're looking at the v2 branch of the project. code here may or may not work. for the latest stable code, please switch to the main branch.
-
+<!-- markdownlint-disable -->
 <h1 align="center">SpongeChat</h1>
 <p align="center">
   <a href="https://skillicons.dev">
     <img src="https://skillicons.dev/icons?i=discordjs,cloudflare,bun" />
   </a>
 </p>
+<!-- markdownlint-restore -->
 SpongeChat is a multi-modal AI discord bot built for the SpongeAss discord server.
 
 Starting out using a cleverbot backend predating ChatGPT, SpongeChat now aims to be a multi-modal AI chatbot, as a companion for the SpongeAss discord server.
