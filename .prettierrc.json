@@ -1,9 +1,9 @@
 {
-	"$schema": "https://json.schemastore.org/prettierrc.json",
-	"printWidth": 120,
-	"useTabs": true,
-	"singleQuote": true,
-	"quoteProps": "as-needed",
-	"trailingComma": "all",
-	"endOfLine": "lf"
+    "$schema": "https://json.schemastore.org/prettierrc.json",
+    "printWidth": 120,
+    "useTabs": true,
+    "singleQuote": false,
+    "quoteProps": "as-needed",
+    "trailingComma": "all",
+    "endOfLine": "lf"
 }
