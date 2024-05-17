@@ -1,10 +1,11 @@
 import { SlashCommandBuilder } from "discord.js";
+import chalk from "chalk";
 
 /** @type {import('./index.js').Command} */
 export default {
 	data: new SlashCommandBuilder()
 		.setName("ducttape")
-		.setDescription("STFU! Enable/disable passive response features until next restart.")
+		.setDescription("STFU! Enable/disable passive response features until the next k/V wipe.")
 		.addBooleanOption((o) =>
 			o.setName("enabled").setDescription("Map to => client.tempStore#silentMode").setRequired(true),
 		)
@@ -19,8 +20,12 @@ export default {
 			.catch(() => false);
 
 		await interaction.editReply({
-			content: `**${toOption ? "Enabled" : "Disabled"}** silent mode. ${!toOption ? "" : "Passive response features are now disabled until the bot restarts, or until silent mode is disabled. (Pinging the bot will always result in a response.)"}`,
+			content: `**${toOption ? "Enabled" : "Disabled"}** silent mode. ${!toOption ? "" : "Passive response features are now disabled until the k/V is wiped, or until silent mode is disabled. (Pinging the bot will always result in a response.)"}`,
 		});
+
+		console.log(
+			`${chalk.bold.green("AI")} Silent mode was ${chalk.bold(silentSaved ? "enabled" : "disabled")} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
+		);
 
 		if (sync) {
 			const reply = await interaction.fetchReply().catch(() => ({
