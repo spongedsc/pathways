@@ -20,6 +20,7 @@ const callTextChannel = async ({ client, message }) => {
 	if (process.env.ACTIVATION_MODE === "BLACKLIST" && channelSatisfies) return;
 	if (client.tempStore.get("silentMode") === true && !message?.mentions?.has(client?.user?.id)) return;
 	if (message?.content?.startsWith("!!")) return;
+	if (message.author.bot) return;
 
 	const formattedMessage = await modelInteractions.response.formatMessage();
 
@@ -115,10 +116,6 @@ const callTextChannel = async ({ client, message }) => {
 				.catch(() => null);
 		}
 	}
-};
-
-const callThreadChannel = async ({ client, message }) => {
-	message.reply("herro").catch(() => null);
 };
 
 /** @type {import('./index.js').Event<Events.MessageCreate>} */
