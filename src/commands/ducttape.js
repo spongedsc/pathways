@@ -24,7 +24,7 @@ export default {
 		});
 
 		console.log(
-			`${chalk.bold.green("AI")} Silent mode was ${chalk.bold(silentSaved ? "enabled" : "disabled")} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
+			`${chalk.bold.green("AI")} Silent mode was ${chalk.bold(toOption ? "enabled" : "disabled")} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
 		);
 
 		if (sync) {
