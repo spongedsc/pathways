@@ -1,0 +1,36 @@
+{
+	"projectName": "SpongeChat",
+	"projectOwner": "spongedsc",
+	"repoType": "github",
+	"repoHost": "https://github.com",
+	"files": ["README.md"],
+	"imageSize": 100,
+	"commit": true,
+	"commitConvention": "none",
+	"contributors": [
+		{
+			"login": "daniwasonline",
+			"name": "Dani",
+			"avatar_url": "https://avatars.githubusercontent.com/u/28845225?v=4",
+			"profile": "https://www.danny.works/",
+			"contributions": ["code", "ideas", "review"]
+		},
+		{
+			"login": "artifishvr",
+			"name": "Arti",
+			"avatar_url": "https://avatars.githubusercontent.com/u/59352535?v=4",
+			"profile": "https://github.com/artifishvr",
+			"contributions": ["code", "ideas", "review", "infra", "design"]
+		},
+		{
+			"login": "Butterroach",
+			"name": "Butterroach",
+			"avatar_url": "https://avatars.githubusercontent.com/u/111113093?v=4",
+			"profile": "https://github.com/Butterroach",
+			"contributions": ["bug", "code", "ideas"]
+		}
+	],
+	"contributorsPerLine": 7,
+	"linkToUsage": true
+}
+
