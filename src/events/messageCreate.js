@@ -1,11 +1,8 @@
-import { ChannelType, Events, ThreadAutoArchiveDuration } from "discord.js";
+import { ChannelType, Events } from "discord.js";
 import { ModelInteractions } from "../util/models/index.js";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { v4 } from "uuid";
 import path from "node:path";
-// import { Environment } from '../util/helpers.js';
-
-// const env = new Environment();
 
 const callTextChannel = async ({ client, message }) => {
 	const modelInteractions = new ModelInteractions({
@@ -95,7 +92,6 @@ const callTextChannel = async ({ client, message }) => {
 		} catch (e) {
 			await message.react("❌").catch(() => false);
 		}
-		return;
 	} else {
 		const responseMsg = await message
 			?.reply({
@@ -122,7 +118,6 @@ const callTextChannel = async ({ client, message }) => {
 };
 
 const callThreadChannel = async ({ client, message }) => {
-	const channel = message.channel;
 	message.reply("herro").catch(() => null);
 };
 
@@ -136,10 +131,6 @@ export default {
 		if (message?.channel === null) return;
 		if (message.channel.type === ChannelType.GuildText) {
 			void callTextChannel({ client, message });
-		}
-
-		if (message.channel.type === ChannelType.PublicThread) {
-			// void callThreadChannel({ client, message });
 		}
 	},
 };
