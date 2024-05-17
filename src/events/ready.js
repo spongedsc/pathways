@@ -37,9 +37,12 @@ export default {
 			.then((s) => s == "true")
 			.catch(() => false);
 
-		client.tempStore.set("silentMode", silentSaved);
+		const instructionSet = await client.kv.get("instructionSet").catch(() => process.env.MODEL_LLM_PRESET || "default");
+
+		client.tempStore.set("instructionSet", instructionSet);
 
 		console.log(`${chalk.bold.green("AI")} Silent mode is ${chalk.bold(silentSaved ? "enabled" : "disabled")}`);
+		console.log(`${chalk.bold.green("AI")} Instruction set is ${chalk.bold(instructionSet)}`);
 
 		console.log(
 			`${chalk.bold.green("Core")} acting as ${chalk.bold(client.user.tag)} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,

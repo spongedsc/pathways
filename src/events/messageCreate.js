@@ -5,21 +5,22 @@ import { v4 } from "uuid";
 import path from "node:path";
 
 const callTextChannel = async ({ client, message }) => {
-	const modelInteractions = new ModelInteractions({
-		message,
-		kv: client.kv,
-		instructionSet: process.env.MODEL_LLM_PRESET || "default",
-		baseHistory: [],
-		accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-		token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
-	});
-
 	const channelSetlist = process.env.ACTIVATION_CHANNEL_SETLIST.split(",");
 	const channelSatisfies = channelSetlist?.includes(message?.channel?.id);
 	if (process.env.ACTIVATION_MODE === "WHITELIST" && !channelSatisfies) return;
 	if (process.env.ACTIVATION_MODE === "BLACKLIST" && channelSatisfies) return;
-	if (client.tempStore.get("silentMode") === true && !message?.mentions?.has(client?.user?.id)) return;
+
 	if (message?.content?.startsWith("!!")) return;
+	if (client.tempStore.get("silentMode") === true && !message?.mentions?.has(client?.user?.id)) return;
+
+	const modelInteractions = new ModelInteractions({
+		message,
+		kv: client.kv,
+		instructionSet: client.tempStore.get("instructionSet") || process.env.MODEL_LLM_PRESET || "default",
+		baseHistory: [],
+		accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+		token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
+	});
 
 	const formattedMessage = await modelInteractions.response.formatMessage();
 
