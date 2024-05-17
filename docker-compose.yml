@@ -2,10 +2,9 @@ name: spongechat
 services:
   spongechat:
     image: "ghcr.io/spongedsc/spongechat:dev-v2"
+    env_file:
+      - ./.env
     environment:
-      - MODEL_LLM_PRESET=default
-      - ACTIVATION_MODE=WHITELIST
-      - ACTIVATION_CHANNEL_SETLIST=CHANGEME
       - KV_URI=redis://dragonfly:6379
     restart: on-failure
     depends_on:
