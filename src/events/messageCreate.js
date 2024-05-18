@@ -22,13 +22,14 @@ const callTextChannel = async ({ client, message }) => {
 		token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
 	});
 
-	const formattedMessage = await modelInteractions.response.formatMessage();
+	const formattedMessage = await modelInteractions.response.formatUserMessage();
 
 	const history = await modelInteractions.history
 		.add({
 			key: message?.channel?.id,
 			role: "user",
 			content: formattedMessage,
+			context: { respondingTo: message?.id },
 		})
 		.catch(console.error);
 
@@ -47,13 +48,17 @@ const callTextChannel = async ({ client, message }) => {
 		}));
 
 	const callResponse = modelCall?.result?.response?.trim();
+	const textResponse = callResponse?.split("!gen")?.[0];
+	const genData = callResponse?.split("!gen")?.[1]?.replace("[", "").replace("]", "");
+
 	if (callResponse.length === 0 || callResponse === "") {
 		await modelInteractions.history
 			.add(
 				{
 					key: message?.channel?.id,
 					role: "assistant",
-					content: "[no response]",
+					content: modelInteractions.response.formatAssistantMessage("[no response]"),
+					context: { respondingTo: message?.id },
 				},
 				true,
 			)
@@ -65,15 +70,14 @@ const callTextChannel = async ({ client, message }) => {
 				{
 					key: message?.channel?.id,
 					role: "assistant",
-					content: callResponse,
+					content: modelInteractions.response.formatAssistantMessage(textResponse),
+					contextId: message?.id,
+					context: { respondingTo: message?.id },
 				},
 				true,
 			)
 			.catch(console.error);
 	}
-
-	const textResponse = callResponse?.split("!gen")?.[0];
-	const genData = callResponse?.split("!gen")?.[1]?.replace("[", "").replace("]", "");
 
 	if (textResponse?.length >= 2000) {
 		try {
@@ -102,6 +106,20 @@ const callTextChannel = async ({ client, message }) => {
 			.catch(() => message.react("❌").catch(() => false));
 		if (responseMsg !== false && callResponse.includes("!gen")) {
 			await message.channel.sendTyping();
+
+			await modelInteractions.history
+				.add(
+					{
+						key: message?.channel?.id,
+						role: "assistant",
+						content: modelInteractions.response.formatAssistantMessage(`[Generated an image]\n${genData.trim()}`),
+						contextId: message?.id,
+						context: { respondingTo: message?.id },
+					},
+					true,
+				)
+				.catch(console.error);
+
 			const imageGen = await modelInteractions.response.generateImage({ data: genData }).catch((e) => {
 				console.error(e);
 				return null;

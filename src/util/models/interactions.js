@@ -39,19 +39,19 @@ export class InteractionHistory {
 		return [...this.baseHistory, ...fetchedMessages];
 	}
 
-	async add({ key, role, content }, returnOne) {
+	async add({ key, role, content, context }, returnOne) {
 		const runOperation = async () => {
-			return await this.kv.lPush(key, JSON.stringify({ role, content }));
+			return await this.kv.lPush(key, JSON.stringify({ role, content, context }));
 		};
 
 		if (returnOne) {
 			await runOperation();
 
-			return { role, content };
+			return { role, content, context };
 		} else {
 			const base = await this.getHistory({ key });
 			await runOperation();
-			return [...base, { role, content }];
+			return [...base, { role, content, context }];
 		}
 	}
 }
@@ -121,7 +121,7 @@ export class InteractionResponse {
 		return buffer;
 	}
 
-	async formatMessage() {
+	async formatUserMessage() {
 		const username = this?.author?.username;
 		const pronouns = await this.authorPronouns().catch(() => "they/them");
 		const date = Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString() + " UTC";
@@ -129,6 +129,12 @@ export class InteractionResponse {
 
 		const image = await this.imageRecognition();
 
-		return `${username} (${pronouns}) on ${date}: ${content} ${image !== null ? "\n\n" + image : ""}`.trim();
+		return `${username} (${pronouns}) on ${date}: ${content} ${image !== null ? "\n\nImage description: " + image : ""}`.trim();
+	}
+
+	formatAssistantMessage(content) {
+		const date = Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString() + " UTC";
+
+		return `Assistant on ${date}: ${content}`.trim();
 	}
 }
