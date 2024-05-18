@@ -5,10 +5,11 @@ import chalk from "chalk";
  * @param {import('../events/index.js').Event[]} events
  * @param {import('discord.js').Client} client
  */
-export function registerEvents(commands, events, client) {
+export function registerEvents(commands, actions, events, client) {
 	// Move the command map to the client context.
 	// Necessary change to move interactionCreate into its' own file.
-	client.commands = commands;
+	client.commandsMap = commands;
+	client.actionsMap = actions;
 
 	for (const event of [...events]) {
 		client[event.once ? "once" : "on"](event.name, async (...args) => {
