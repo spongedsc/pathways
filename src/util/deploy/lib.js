@@ -1,17 +1,19 @@
+import "temporal-polyfill/global";
+
 import process from "node:process";
 import { URL } from "node:url";
 import { API } from "@discordjs/core/http-only";
 import { REST } from "discord.js";
-import { Environment } from "./helpers.js";
-import { loadCommands } from "./loaders.js";
+import { Environment } from "../helpers.js";
+import { loadCommands } from "../loaders.js";
 
 import chalk from "chalk";
 
 export const cmdRollout = async () => {
 	const env = new Environment();
 
-	const commands = await loadCommands(new URL("../commands/", import.meta.url));
-	const actions = await loadCommands(new URL("../actions/", import.meta.url));
+	const commands = await loadCommands(new URL("../../commands/", import.meta.url));
+	const actions = await loadCommands(new URL("../../actions/", import.meta.url));
 	const data = [...commands.values(), ...actions.values()].map((command) => command.data);
 
 	const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
