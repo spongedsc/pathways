@@ -1,14 +1,12 @@
-FROM node:lts-alpine
-ENV NODE_ENV=production
-
-RUN npm install -g pnpm
+FROM imbios/bun-node:20-alpine
+ENV NODE_ENV=PRODUCTION
 
 WORKDIR /app
 
-COPY ["package.json", "pnpm-lock.yaml", "./"]
 
-RUN pnpm install --prod
+COPY ["package.json", "bun.lockb", "./"]
 
+RUN bun install --frozen-lockfile --production
 COPY . .
 
-CMD ["node", "index.js"]
+CMD bun start
