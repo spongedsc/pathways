@@ -391,9 +391,9 @@ export class InteractionMessageEvent {
 
 		return responseMsg
 			.edit({
-				content: final?.trim?.length >= 2000 ? "" : final,
+				content: final?.trim()?.length >= 2000 ? "" : final,
 				files: [
-					final.trim().length >= 2000
+					final?.trim()?.length >= 2000
 						? {
 								attachment: Buffer.from(final, "utf-8"),
 								name: "response.md",
