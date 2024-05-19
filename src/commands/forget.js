@@ -59,7 +59,7 @@ export default {
 			)
 
 			const button = new ButtonBuilder()
-				.setLabel('Chat Logs')
+				.setLabel('View memories')
 				.setURL(`${process.env.WASTEBIN_HOST}${(await request.json()).path}`)
 				.setStyle(ButtonStyle.Link);
 
