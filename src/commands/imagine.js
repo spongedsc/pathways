@@ -70,7 +70,12 @@ export default {
 
 		await interaction.editReply({
 			content: `\`${prompt}\`\n*generated with \`${model}\`*`,
-			files: [buffer],
+			files: [
+				{
+					attachment: buffer,
+					name: "image0.jpg",
+				},
+			],
 		});
 	},
 };

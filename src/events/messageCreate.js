@@ -1,8 +1,5 @@
-import { Attachment, ChannelType, Events } from "discord.js";
+import { ChannelType, Events } from "discord.js";
 import { ModelInteractions } from "../util/models/index.js";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
-import { v4 } from "uuid";
-import path from "node:path";
 
 const callTextChannel = async ({ client, message }) => {
 	const channelSetlist = process.env.ACTIVATION_CHANNEL_SETLIST.split(",");
@@ -29,7 +26,8 @@ const callTextChannel = async ({ client, message }) => {
 			key: message?.channel?.id,
 			role: "user",
 			content: formattedMessage,
-			context: { respondingTo: message?.id },
+			respondingTo: message?.id,
+			model: "@cf/meta/llama-3-8b-instruct",
 		})
 		.catch(console.error);
 
@@ -58,7 +56,8 @@ const callTextChannel = async ({ client, message }) => {
 					key: message?.channel?.id,
 					role: "assistant",
 					content: modelInteractions.response.formatAssistantMessage("[no response]"),
-					context: { respondingTo: message?.id },
+					respondingTo: message?.id,
+					model: "@cf/meta/llama-3-8b-instruct",
 				},
 				true,
 			)
@@ -72,7 +71,8 @@ const callTextChannel = async ({ client, message }) => {
 					role: "assistant",
 					content: modelInteractions.response.formatAssistantMessage(textResponse),
 					contextId: message?.id,
-					context: { respondingTo: message?.id },
+					respondingTo: message?.id,
+					model: "@cf/meta/llama-3-8b-instruct",
 				},
 				true,
 			)
@@ -113,7 +113,8 @@ const callTextChannel = async ({ client, message }) => {
 						role: "assistant",
 						content: modelInteractions.response.formatAssistantMessage(`[Generated an image]\n${genData.trim()}`),
 						contextId: message?.id,
-						context: { respondingTo: message?.id },
+						respondingTo: message?.id,
+						model: "@cf/meta/llama-3-8b-instruct",
 					},
 					true,
 				)
@@ -128,7 +129,12 @@ const callTextChannel = async ({ client, message }) => {
 			responseMsg
 				.edit({
 					content: textResponse,
-					files: [imageGen],
+					files: [
+						{
+							attachment: imageGen,
+							name: "generated0.jpg",
+						},
+					],
 				})
 				.catch(() => null);
 		}

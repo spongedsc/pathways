@@ -41,19 +41,25 @@ export class InteractionHistory {
 		return [...this.baseHistory, ...fetchedMessages];
 	}
 
-	async add({ key, role, content, context }, returnOne) {
+	async add({ key, role, content, context, respondingTo, model }, returnOne) {
+		let abstractedCtx = {
+			...context,
+			respondingTo,
+			model,
+		};
+
 		const runOperation = async () => {
-			return await this.kv.lPush(key, JSON.stringify({ role, content, context }));
+			return await this.kv.lPush(key, JSON.stringify({ role, content, abstractedCtx }));
 		};
 
 		if (returnOne) {
 			await runOperation();
 
-			return { role, content, context };
+			return { role, content, abstractedCtx };
 		} else {
 			const base = await this.getHistory({ key });
 			await runOperation();
-			return [...base, { role, content, context }];
+			return [...base, { role, content, abstractedCtx }];
 		}
 	}
 
@@ -154,7 +160,7 @@ export class InteractionResponse {
 		return content.trim();
 	}
 
-	formattedTz() {
+	currentTemporalISO() {
 		return Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString();
 	}
 }
