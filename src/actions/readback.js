@@ -17,24 +17,32 @@ export default {
 				accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
 				token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
 			},
-			["response"],
+			["response", "messageEvent"],
 		);
 
 		try {
-			const formatted = await modelInteractions.history
+			const { log, length } = await modelInteractions.history
 				.formatLog({
 					key: interaction?.channel?.id,
 					filter: (im) =>
 						im?.context?.respondingTo === interaction.targetMessage?.id ||
 						im?.context?.respondingTo === interaction?.targetMessage?.reference?.messageId,
 				})
-				.then((returns) => Buffer.from(returns));
+				.then((returns) => ({
+					...returns,
+					log: Buffer.from(returns?.log),
+				}));
+
+			if (length === 0)
+				return await interaction.editReply({
+					content: "No context was found for this message. Maybe the history was cleared?",
+				});
 
 			await interaction?.editReply({
 				content: "",
 				files: [
 					{
-						attachment: formatted,
+						attachment: log,
 						name: "context.md",
 					},
 				],

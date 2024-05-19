@@ -1,15 +1,14 @@
 import { fetch } from "undici";
-import { instructionSets } from "./constants.js";
+import { events, instructionSets } from "./constants.js";
 import { WorkersAI } from "./index.js";
-import { existsSync } from "node:fs";
-import { v4 } from "uuid";
 
 export class InteractionHistory {
 	constructor(
-		{ kv, instructionSet, baseHistory } = {
+		{ kv, instructionSet, baseHistory, model } = {
 			kv: null,
 			instructionSet: process.env.MODEL_LLM_PRESET || "default",
 			baseHistory: [],
+			model: "@cf/meta/llama-3-8b-instruct",
 		},
 	) {
 		this.kv = kv;
@@ -21,9 +20,10 @@ export class InteractionHistory {
 				content: this.instructionSet,
 			},
 		];
+		this.model = model;
 	}
 
-	async getHistory({ key }) {
+	async get({ key }) {
 		const fetchedMessages = (await this.kv.lRange(key, 0, -1))
 			.reverse()
 			.map((m) => JSON.parse(m))
@@ -41,25 +41,31 @@ export class InteractionHistory {
 		return [...this.baseHistory, ...fetchedMessages];
 	}
 
-	async add({ key, role, content, context, respondingTo, model }, returnOne) {
+	async add(
+		{ key, role, content, context, respondingTo, model, timestamp } = {
+			model: this.model || "@cf/meta/llama-3-8b-instruct",
+		},
+		returnOne,
+	) {
 		let abstractedCtx = {
 			...context,
 			respondingTo,
-			model,
+			timestamp: timestamp || Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString(),
+			model: model || "@cf/meta/llama-3-8b-instruct",
 		};
 
 		const runOperation = async () => {
-			return await this.kv.lPush(key, JSON.stringify({ role, content, abstractedCtx }));
+			return await this.kv.lPush(key, JSON.stringify({ role, content, context: abstractedCtx }));
 		};
 
 		if (returnOne) {
 			await runOperation();
 
-			return { role, content, abstractedCtx };
+			return { role, content, context: abstractedCtx };
 		} else {
-			const base = await this.getHistory({ key });
+			const base = await this.get({ key });
 			await runOperation();
-			return [...base, { role, content, abstractedCtx }];
+			return [...base, { role, content, context: abstractedCtx }];
 		}
 	}
 
@@ -73,19 +79,25 @@ export class InteractionHistory {
 		const interactions = current?.filter(typeof filter === "function" ? filter : (f) => f);
 
 		const formatted = interactions
-			?.map((entry) => `Assistant on ${entry?.timestamp} UTC: ${entry?.content}`)
+			?.map((entry) => {
+				if (entry?.role !== "assistant") return entry.content;
+				return `Assistant (${entry?.context?.model}) on ${entry?.context?.timestamp} UTC: ${entry?.content}`;
+			})
 			?.join("\n\n==========\n\n");
 
-		return formatted;
+		return {
+			length: interactions?.length,
+			log: formatted,
+		};
 	}
 }
 
 export class InteractionResponse {
-	constructor({ message, tz, accountId, token }) {
+	constructor({ message, tz, accountId, token, model = "@cf/meta/llama-3-8b-instruct" }) {
 		this.message = message;
 		this.author = message?.author;
 		this.tz = tz || "Etc/UTC";
-		this.workersAI = new WorkersAI({ accountId, token });
+		this.workersAI = new WorkersAI({ accountId, token, model });
 	}
 
 	async authorPronouns() {
@@ -160,7 +172,245 @@ export class InteractionResponse {
 		return content.trim();
 	}
 
+	/**
+	 *
+	 * @param {string} content The content of the message
+	 * @param {object} event The event object
+	 * @returns {string} The formatted message
+	 */
+
+	/**
+	 * Formats the output message for the given content and event.
+	 * @param {string} content The content of the message
+	 * @param {object} event The event object
+	 * @param {boolean} event.active Whether the event is active or not
+	 * @param {string} event.type The type of event
+	 * @param {string} event.status The status of the event
+	 * @returns {string} The formatted message
+	 * @example
+	 * const message = await this.formatOutputMessage(content, event);
+	 * console.log(message);
+	 * // Outputs the formatted message
+	 */
+
+	formatOutputMessage(content, allEvents = []) {
+		const bannerArr = allEvents
+			.map((event) => {
+				const eventData = events[event?.type];
+				const bannerTitle = "> **" + (eventData?.title || "Unknown event") + "**\n";
+				const bannerStatus = "> " + (eventData?.statuses?.[event?.status] || "An unrecognised event took place.");
+				return event?.active ? bannerTitle + bannerStatus : null;
+			})
+			.filter((e) => e !== null);
+
+		const banner = allEvents.length > 0 ? bannerArr.join("\n\n") : "";
+
+		return banner + "\n" + content.trim();
+	}
+
 	currentTemporalISO() {
 		return Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString();
+	}
+}
+
+export class InteractionMessageEvent {
+	constructor({ message, interactionResponse, interactionHistory, model }) {
+		this.message = message;
+		this.client = message?.client;
+		this.author = message?.author;
+		this.response = interactionResponse;
+		this.history = interactionHistory;
+		this.model = model;
+	}
+
+	checkPreliminaryConditions() {
+		const channelSetlist = process.env.ACTIVATION_CHANNEL_SETLIST.split(",");
+		const channelSatisfies = channelSetlist?.includes(this.message?.channel?.id);
+
+		// a bot mention supercedes all other cases; if the message mentions the bot, it's valid
+		const mentionCase = this.message?.mentions?.has(this.client?.user?.id);
+		// these conditions MUST return true for the message to be valid
+		const whitelistCase = process.env.ACTIVATION_MODE === "WHITELIST" && channelSatisfies;
+		const blacklistCase = process.env.ACTIVATION_MODE === "BLACKLIST" && !channelSatisfies;
+
+		// these conditions MUST return false for the message to be invalid
+		const commentCase = this.message?.content?.startsWith("!!");
+		const silentModeCase = this.client.tempStore.get("silentMode") === true;
+
+		// if the bot isn't mentioned, then whitelist/blacklist MUST be met, silent mode MUST be off and the message MUST NOT be a comment
+		return mentionCase || ((whitelistCase || blacklistCase) && !silentModeCase && !commentCase);
+	}
+
+	async validateHistory() {
+		const initialHistory = (await this.history.get({ key: this.message?.channel?.id })).filter(
+			(e) => e.role === "assistant",
+		);
+
+		// condition for last two responses to be empty
+		if (initialHistory.length < 2) return { valid: true, handled: { isRequired: false, executed: false } };
+		const lastSeqEmpty = initialHistory.slice(-2).every((entry) => {
+			return entry.content === "[no response]";
+		});
+
+		// condition for last response to be empty
+		const lastEmpty = initialHistory[initialHistory.length - 1]?.content === "[no response]";
+
+		// if last two responses are empty, delete the key from the KV
+		if (lastSeqEmpty) {
+			const operation = await this.client.kv
+				.del(this.message?.channel?.id)
+				.then(() => true)
+				.catch(() => false);
+
+			// if the operation failed, return no validity and special handling failed
+			if (operation === false)
+				return {
+					valid: false,
+					handled: {
+						isRequired: true,
+						executed: false,
+					},
+				};
+
+			// otherwise, return validity but special handling carried safely
+			return {
+				valid: false,
+				handled: {
+					isRequired: true,
+					executed: true,
+				},
+			};
+		}
+
+		// if last response was empty but there was a previous response in the last two, it's not valid but special handling is not required
+		if (lastEmpty)
+			return {
+				valid: false,
+				handled: {
+					isRequired: false,
+					executed: false,
+				},
+			};
+
+		// otherwise, it's valid and no special handling is required
+		return {
+			valid: true,
+			handled: {
+				isRequired: false,
+				executed: true,
+			},
+		};
+	}
+
+	async handleTextModelCall({ history }) {
+		await this.message?.channel?.sendTyping();
+		const modelCall = await this.response.workersAI
+			.callModel({
+				input: {
+					messages: history,
+				},
+				maxTokens: 512,
+			})
+			.catch(() => ({
+				result: { response: "" },
+			}));
+
+		const callResponse = modelCall?.result?.response?.trim();
+		const textResponse = callResponse?.split("!gen")?.[0];
+		const genData = callResponse?.split("!gen")?.[1]?.replace("[", "").replace("]", "");
+
+		await this.history
+			.add(
+				{
+					key: this.message?.channel?.id,
+					role: "assistant",
+					content: this.response.formatAssistantMessage(textResponse?.length === 0 ? "[no response]" : textResponse),
+					respondingTo: this.message?.id,
+				},
+				true,
+			)
+			.catch(console.error);
+
+		return {
+			textResponse,
+			genData,
+			callResponse,
+		};
+	}
+
+	async handleImageModelCall({ genData, textResponse, responseMsg, events }) {
+		await this.message?.channel?.sendTyping();
+
+		await this.history
+			.add(
+				{
+					key: this.message?.channel?.id,
+					role: "assistant",
+					content: this.response.formatAssistantMessage(`\n${genData.trim()}`, "imagine"),
+					contextId: this.message?.id,
+					respondingTo: this.message?.id,
+					model: "@cf/lykon/dreamshaper-8-lcm",
+				},
+				true,
+			)
+			.catch(console.error);
+
+		const imageGen = await this.response.generateImage({ data: genData }).catch((e) => {
+			console.error(e);
+			return null;
+		});
+
+		if (imageGen === null) return await responseMsg.edit({ content: textResponse }).catch(() => null);
+
+		return responseMsg
+			.edit({
+				content: this.response.formatOutputMessage(
+					textResponse,
+					events.filter((e) => e.type !== "imagine"),
+				),
+				files: [
+					{
+						attachment: imageGen,
+						name: "generated0.jpg",
+					},
+				],
+			})
+			.catch(() => null);
+	}
+
+	async createResponse(
+		{ textResponse, conditions } = {
+			conditions: {
+				amnesia: false,
+				imagine: false,
+			},
+		},
+	) {
+		const events = Object.keys(conditions || {})
+			.filter((key) => conditions[key] === true)
+			.map((e) => {
+				return {
+					active: true,
+					type: e,
+					status: "default",
+				};
+			});
+
+		const text = this.response.formatOutputMessage(textResponse, events);
+		const content = textResponse.length >= 2000 ? "" : text;
+		const files = textResponse.length >= 2000 ? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }] : [];
+
+		const responseMsg = await this.message
+			?.reply({
+				content,
+				files,
+				failIfNotExists: true,
+			})
+			.catch(() => message.react("❌").catch(() => false));
+
+		return {
+			responseMsg,
+			events,
+		};
 	}
 }
