@@ -339,6 +339,11 @@ export class InteractionMessageEvent {
 	}
 
 	async handleImageModelCall({ genData, textResponse, responseMsg, events }) {
+		const final = this.response.formatOutputMessage(
+			textResponse,
+			events.filter((e) => e.type !== "imagine"),
+		);
+		if (genData === null || genData?.length <= 1) return await responseMsg.edit({ content: final }).catch(() => null);
 		await this.message?.channel?.sendTyping();
 
 		await this.history
@@ -364,10 +369,7 @@ export class InteractionMessageEvent {
 
 		return responseMsg
 			.edit({
-				content: this.response.formatOutputMessage(
-					textResponse,
-					events.filter((e) => e.type !== "imagine"),
-				),
+				content: final,
 				files: [
 					{
 						attachment: imageGen,
