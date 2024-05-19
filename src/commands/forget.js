@@ -56,17 +56,20 @@ export default {
 						extension: "md",
 					}),
 				},
-			)
+			).catch((e) => {
+				console.error("Error uploading logs to wastebin: " + e);
+				return false;
+			});
 
 			const button = new ButtonBuilder()
-				.setLabel('View memories')
-				.setURL(`${process.env.WASTEBIN_HOST}${(await request.json()).path}`)
+				.setLabel('View cleared memories')
+				.setURL(request !== false ? `${process.env.WASTEBIN_HOST}${(await request.json()).path}` : 'https://blahaj.ca/')
 				.setStyle(ButtonStyle.Link);
 
 			await interaction?.editReply({
 				content: `${toSay}`,
 				failIfNotExists: true,
-				components: [new ActionRowBuilder().addComponents(button)],
+				components: request !== false ? [new ActionRowBuilder().addComponents(button)] : [],
 			});
 
 			return;
