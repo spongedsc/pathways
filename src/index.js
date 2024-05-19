@@ -1,7 +1,7 @@
 import process from "node:process";
 import { URL } from "node:url";
 import { Client, GatewayIntentBits } from "discord.js";
-import { cmdRollout } from "./util/deploy.js";
+import { cmdRollout } from "./util/deploy/lib.js";
 import { loadCommands, loadEvents } from "./util/loaders.js";
 import { registerEvents } from "./util/registerEvents.js";
 import chalk from "chalk";
