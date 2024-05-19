@@ -1,5 +1,6 @@
 module.exports = {
 	git: {
+		//requireBranch: "main",
 		commitMessage: "🔖 bump: release v${version}",
 		requireCleanWorkingDir: false,
 	},
@@ -7,7 +8,10 @@ module.exports = {
 		release: true,
 		draft: true,
 		web: true,
-		releaseName: "{version}: ",
+		releaseName: "${version}: ",
+		releaseNotes: async (context) => {
+			return context.notesOutput;
+		},
 		autoGenerate: true,
 	},
 	npm: {
@@ -18,6 +22,7 @@ module.exports = {
 			accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
 			token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
 			defaultModel: "@cf/meta/llama-3-8b-instruct",
+			releaseNotes: 'git log --no-merges --pretty=format:"* %s %h" ${latestTag}...main',
 		},
 	},
 };
