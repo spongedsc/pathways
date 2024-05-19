@@ -20,7 +20,7 @@ export const events = {
 	amnesia: {
 		title: "🧠 Amnesia",
 		statuses: {
-			default: "SpongeChat wasn't responding to anything, so we cleared the history as a fallback. 😌",
+			default: "SpongeChat wasn't responding to anything, so we cleared the history. 😌"
 		},
 	},
 };
