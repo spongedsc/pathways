@@ -4,14 +4,16 @@ import { WorkersAI } from "./index.js";
 
 export class InteractionHistory {
 	constructor(
-		{ kv, instructionSet, baseHistory, model } = {
+		{ kv, instructionSet, baseHistory, model, contextWindow } = {
 			kv: null,
 			instructionSet: process.env.MODEL_LLM_PRESET || "default",
 			baseHistory: [],
 			model: "@cf/meta/llama-3-8b-instruct",
+			contextWindow: 10,
 		},
 	) {
 		this.kv = kv;
+		this.contextWindow = contextWindow || 10;
 		this.instructionSet = instructionSets[instructionSet || "default"];
 		this.baseHistory = [
 			...baseHistory,
@@ -23,18 +25,16 @@ export class InteractionHistory {
 		this.model = model;
 	}
 
-	async get({ key }) {
+	async get({ key }, all = false) {
 		const fetchedMessages = (await this.kv.lRange(key, 0, -1))
 			.reverse()
 			.map((m) => JSON.parse(m))
+			// only return the last [contextWindow] messages
+			// if all is true, return all messages
+			.slice(0, all ? -1 : this.contextWindow)
 			.reduce((acc, item, index) => {
+				// this reducer is very.. redundant, but i'm adding it for later
 				acc.push(item);
-				if ((index + 1) % 20 === 0) {
-					acc.push({
-						role: "system",
-						content: `Reminder: ${this.instructionSet}`,
-					});
-				}
 				return acc;
 			}, []);
 
