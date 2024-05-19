@@ -1,4 +1,5 @@
 import { ModelInteractions } from "../util/models/index.js";
+import { fetch } from "undici";
 
 /** @type {import('./index.js').Command} */
 export default {
@@ -42,14 +43,21 @@ export default {
 		if (length === 0) return await interaction.editReply({ content: toSay });
 
 		try {
-			await interaction?.editReply({
-				content: toSay,
-				files: [
-					{
-						attachment: log,
-						name: "context.md",
+			const request = fetch(
+				`${process.env.WASTEBIN_HOST}/`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
 					},
-				],
+					body: JSON.stringify({
+						"text": log,
+						"extension": "md",
+					}),
+				},
+			)
+			await interaction?.editReply({
+				content: `${toSay}\n\n${process.env.WASTEBIN_HOST}${(await request.json()).path}`,
 				failIfNotExists: true,
 			});
 

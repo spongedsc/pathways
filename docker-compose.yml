@@ -18,6 +18,15 @@ services:
       - DFLY_snapshot_cron=*/30 * * * *
     volumes:
       - dragonflydata:/data
+  wastebin:
+    image: 'quxfoo/wastebin:latest'
+    environment:
+      - WASTEBIN_DATABASE_PATH=/data/state.db
+    volumes:
+      - wastebindata:/data
+    ports:
+      - "8088:8088"
 
 volumes:
   dragonflydata:
+  wastebindata:
