@@ -162,10 +162,29 @@ export class InteractionResponse {
 		const pronouns = await this.authorPronouns(this?.author?.id).catch(() => "they/them");
 		const date = Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString() + " UTC";
 		const content = this?.message?.content;
+		const reference = this?.message?.reference
+			? await this.message
+					?.fetchReference()
+					.then(async (r) => {
+						const refContent = r?.content;
+						const refAuthor = r?.author?.username;
+						const refPronouns = await this.authorPronouns(r?.author?.id).catch(() => "they/them");
+						/**
+						 * NOTE: Message#createdAt is a Date. As Date.prototype#toTemporalInstant isn't polyfilled yet, we're using it as a raw date here.
+						 * In the future, this should be changed to be converted into a TemporalInstant.
+						 */
+						const refDate = r?.createdAt.toISOString() + " UTC";
+						return `[Reply to]\n> ${refAuthor} (${refPronouns}) on ${refDate}: ${refContent}\n\n`;
+					})
+					.catch((e) => {
+						console.error(e);
+						return "";
+					})
+			: "";
 
 		const image = await this.imageRecognition();
 
-		return `${username} (${pronouns}) on ${date}: ${content} ${image !== null ? "\n\nImage description: " + image : ""}`.trim();
+		return `${reference} ${username} (${pronouns}) on ${date}: ${content} ${image !== null ? "\n\nImage description: " + image : ""}`.trim();
 	}
 
 	formatAssistantMessage(content) {
