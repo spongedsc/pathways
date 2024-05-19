@@ -100,8 +100,8 @@ export class InteractionResponse {
 		this.workersAI = new WorkersAI({ accountId, token, model });
 	}
 
-	async authorPronouns() {
-		const request = await fetch(`https://pronoundb.org/api/v2/lookup?platform=discord&ids=${this?.author?.id}`)
+	async authorPronouns(id) {
+		const request = await fetch(`https://pronoundb.org/api/v2/lookup?platform=discord&ids=${id}`)
 			.then((r) => r.json())
 			.catch(() => ({}));
 
@@ -159,7 +159,7 @@ export class InteractionResponse {
 
 	async formatUserMessage() {
 		const username = this?.author?.username;
-		const pronouns = await this.authorPronouns().catch(() => "they/them");
+		const pronouns = await this.authorPronouns(this?.author?.id).catch(() => "they/them");
 		const date = Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString() + " UTC";
 		const content = this?.message?.content;
 
