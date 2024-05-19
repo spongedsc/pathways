@@ -38,7 +38,7 @@ export default {
 					content: "No context was found for this message. Maybe the history was cleared?",
 				});
 
-			await interaction?.editReply({
+			return await interaction?.editReply({
 				content: "",
 				files: [
 					{
@@ -52,7 +52,5 @@ export default {
 			console.error(e);
 			await interaction.editReply({ content: "An error occurred whilst sending the context." });
 		}
-
-		return await interaction.editReply({ content: "woohoo!" });
 	},
 };
