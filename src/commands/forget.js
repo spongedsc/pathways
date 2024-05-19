@@ -1,5 +1,6 @@
 import { ModelInteractions } from "../util/models/index.js";
 import { fetch } from "undici";
+import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 
 /** @type {import('./index.js').Command} */
 export default {
@@ -56,9 +57,16 @@ export default {
 					}),
 				},
 			)
+
+			const button = new ButtonBuilder()
+				.setLabel('Chat Logs')
+				.setURL(`${process.env.WASTEBIN_HOST}${(await request.json()).path}`)
+				.setStyle(ButtonStyle.Link);
+
 			await interaction?.editReply({
-				content: `${toSay}\n\n${process.env.WASTEBIN_HOST}${(await request.json()).path}`,
+				content: `${toSay}`,
 				failIfNotExists: true,
+				components: [new ActionRowBuilder().addComponents(button)],
 			});
 
 			return;
