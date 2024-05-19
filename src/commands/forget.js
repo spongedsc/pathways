@@ -1,4 +1,6 @@
 import { ModelInteractions } from "../util/models/index.js";
+import { fetch } from "undici";
+import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 
 /** @type {import('./index.js').Command} */
 export default {
@@ -42,15 +44,32 @@ export default {
 		if (length === 0) return await interaction.editReply({ content: toSay });
 
 		try {
-			await interaction?.editReply({
-				content: toSay,
-				files: [
-					{
-						attachment: log,
-						name: "context.md",
+			const request = await fetch(
+				`${process.env.WASTEBIN_HOST}/`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
 					},
-				],
+					body: JSON.stringify({
+						text: log.toString("utf-8"),
+						extension: "md",
+					}),
+				},
+			).catch((e) => {
+				console.error("Error uploading logs to wastebin: " + e);
+				return false;
+			});
+
+			const button = new ButtonBuilder()
+				.setLabel('View cleared memories')
+				.setURL(request !== false ? `${process.env.WASTEBIN_HOST}${(await request.json()).path}` : 'https://blahaj.ca/')
+				.setStyle(ButtonStyle.Link);
+
+			await interaction?.editReply({
+				content: `${toSay}`,
 				failIfNotExists: true,
+				components: request !== false ? [new ActionRowBuilder().addComponents(button)] : [],
 			});
 
 			return;
