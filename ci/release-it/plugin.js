@@ -1,8 +1,14 @@
 import { Plugin } from "release-it";
 import { WorkersAI } from "../../src/util/models/index.js";
 class SpongeChatReleaseItPlugin extends Plugin {
+	static disablePlugin(options) {}
+
 	async beforeBump() {
 		const { accountId, token, defaultModel, releaseNotes } = this.getContext();
+		if (!accountId || !token) {
+			this.log.error("SpongeChat: Missing accountId or token");
+			return false;
+		}
 		const workers = new WorkersAI({
 			accountId,
 			token,
@@ -43,9 +49,14 @@ class SpongeChatReleaseItPlugin extends Plugin {
 				maxTokens: 1000,
 			})
 			.then((r) => r.result?.response?.trim())
-			.catch(() => {
-				throw new Error("Could not generate a release note for " + version);
+			.catch((e) => {
+				console.error(e);
+				return false;
 			});
+		if (!notesOutput) {
+			this.log.error("SpongeChat: Couldn't generate a release note for " + version);
+			return false;
+		}
 		this.log.info(`Created a release note for ${version} (using ${workers.defaultModel})`);
 
 		const header = `**✨ Note: This release note was written by LLaMA and is not necessarily accurate. Please refer to the Commits section for more concise information on what's changed.**\n\n`;

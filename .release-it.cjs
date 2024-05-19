@@ -2,7 +2,6 @@ module.exports = {
 	git: {
 		//requireBranch: "main",
 		commitMessage: "🔖 bump: release v${version}",
-		requireCleanWorkingDir: false,
 	},
 	github: {
 		release: true,
