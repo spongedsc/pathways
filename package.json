@@ -9,7 +9,8 @@
         "format": "prettier --write . && eslint --ext .js,.mjs,.cjs --fix --format=pretty src",
         "start": "node --require dotenv/config src/index.js",
         "cmd:undeploy": "node --require dotenv/config src/util/deploy/cli.js undeploy",
-        "cmd:deploy": "node --require dotenv/config src/util/deploy/cli.js deploy"
+        "cmd:deploy": "node --require dotenv/config src/util/deploy/cli.js deploy",
+        "ci:release": "dotenv -e .env -- release-it --config .release-it.cjs"
     },
     "_moduleAliases": {
         "@": "./src",
@@ -31,10 +32,14 @@
         "uuid": "^9.0.1"
     },
     "devDependencies": {
+        "@release-it/conventional-changelog": "^8.0.1",
         "all-contributors-cli": "^6.26.1",
+        "dotenv-cli": "^7.4.2",
         "eslint": "^8.53.0",
         "eslint-config-neon": "^0.1.57",
         "eslint-formatter-pretty": "^5.0.0",
-        "prettier": "^3.0.3"
+        "execa": "^9.1.0",
+        "prettier": "^3.0.3",
+        "release-it": "^17"
     }
 }
