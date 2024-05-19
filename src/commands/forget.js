@@ -43,7 +43,7 @@ export default {
 		if (length === 0) return await interaction.editReply({ content: toSay });
 
 		try {
-			const request = fetch(
+			const request = await fetch(
 				`${process.env.WASTEBIN_HOST}/`,
 				{
 					method: "POST",
@@ -51,8 +51,8 @@ export default {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						"text": log,
-						"extension": "md",
+						text: log.toString("utf-8"),
+						extension: "md",
 					}),
 				},
 			)

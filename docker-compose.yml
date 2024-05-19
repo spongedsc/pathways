@@ -26,6 +26,7 @@ services:
       - wastebindata:/data
     ports:
       - "8088:8088"
+    user: "0:0"
 
 volumes:
   dragonflydata:
