@@ -1,4 +1,4 @@
-import { ChannelType, Events } from "discord.js";
+import { Attachment, ChannelType, Events } from "discord.js";
 import { ModelInteractions } from "../util/models/index.js";
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { v4 } from "uuid";
@@ -81,19 +81,18 @@ const callTextChannel = async ({ client, message }) => {
 
 	if (textResponse?.length >= 2000) {
 		try {
-			const randFileName = v4().split("-").join();
-			if (!existsSync(path.resolve("./temp/"))) mkdirSync(path.resolve("./temp/"));
-			writeFileSync(path.resolve(`./temp/${randFileName}.md`), textResponse);
-
 			await message
 				?.reply({
 					content: "",
-					files: [`./temp/${randFileName}.md`],
+					files: [
+						{
+							attachment: Buffer.from(textResponse, "utf-8"),
+							name: "response.md",
+						},
+					],
 					failIfNotExists: true,
 				})
 				.catch(() => message.react("❌").catch(() => false));
-
-			unlinkSync(path.resolve(`./temp/${randFileName}.md`));
 		} catch (e) {
 			await message.react("❌").catch(() => false);
 		}

@@ -1,6 +1,8 @@
 import { fetch } from "undici";
 import { instructionSets } from "./constants.js";
 import { WorkersAI } from "./index.js";
+import { existsSync } from "node:fs";
+import { v4 } from "uuid";
 
 export class InteractionHistory {
 	constructor(
@@ -53,6 +55,22 @@ export class InteractionHistory {
 			await runOperation();
 			return [...base, { role, content, context }];
 		}
+	}
+
+	async formatLog({ key, filter }) {
+		const current = (
+			await this.kv
+				.lRange(key, 0, -1)
+				.then((r) => r.map((m) => JSON.parse(m)))
+				.catch(() => [])
+		).reverse();
+		const interactions = current?.filter(typeof filter === "function" ? filter : (f) => f);
+
+		const formatted = interactions
+			?.map((entry) => `Assistant on ${entry?.timestamp} UTC: ${entry?.content}`)
+			?.join("\n\n==========\n\n");
+
+		return formatted;
 	}
 }
 
@@ -133,8 +151,10 @@ export class InteractionResponse {
 	}
 
 	formatAssistantMessage(content) {
-		const date = Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString() + " UTC";
+		return content.trim();
+	}
 
-		return `Assistant on ${date}: ${content}`.trim();
+	formattedTz() {
+		return Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString();
 	}
 }

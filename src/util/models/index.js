@@ -42,8 +42,9 @@ export class WorkersAI {
 }
 
 export class ModelInteractions {
-	constructor(opts) {
-		this.history = new InteractionHistory(opts);
-		this.response = new InteractionResponse(opts);
+	constructor(opts, disabledModules = []) {
+		this.disabledModules = disabledModules;
+		this.history = disabledModules?.includes("history") ? null : new InteractionHistory(opts);
+		this.response = disabledModules?.includes("response") ? null : new InteractionResponse(opts);
 	}
 }
