@@ -14,6 +14,8 @@ services:
     image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
     ulimits:
       memlock: -1
+    environment:
+      - DFLY_snapshot_cron=*/30 * * * *
     volumes:
       - dragonflydata:/data
 
