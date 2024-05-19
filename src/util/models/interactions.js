@@ -326,7 +326,10 @@ export class InteractionMessageEvent {
 		const modelCall = await this.response.workersAI
 			.callModel({
 				input: {
-					messages: history,
+					messages: history.map((e) => ({
+						role: e.role,
+						content: e.content,
+					})),
 				},
 				maxTokens: 512,
 			})
