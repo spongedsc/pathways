@@ -9,7 +9,9 @@ const callTextChannel = async ({ client, message }) => {
 		baseHistory: [],
 		accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
 		token: process.env.CLOUDFLARE_ACCOUNT_TOKEN,
+		openaiToken: process.env.OPENAI_ACCOUNT_TOKEN,
 		model: "@cf/meta/llama-3-8b-instruct",
+		callsystem: process.env.MODEL_LLM_CALLSYSTEM || "legacy",
 	});
 
 	const preliminaryConditions = modelInteractions.messageEvent.checkPreliminaryConditions();
@@ -40,20 +42,45 @@ const callTextChannel = async ({ client, message }) => {
 		})
 		.catch(console.error);
 
-	const { textResponse, genData, callResponse } = await modelInteractions.messageEvent.handleTextModelCall({ history });
+	const { legacy, runners, response } = await modelInteractions.messageEvent.preSend({ history });
 
-	if (callResponse.length === 0 || callResponse === "") return await message.react("⚠️").catch(() => false);
+	if (legacy?.active) {
+		const { textResponse, genData, callResponse } = legacy;
+		if (callResponse.length === 0 || callResponse === "") return await message.react("⚠️").catch(() => false);
 
-	const { responseMsg, events } = await modelInteractions.messageEvent.createResponse({
-		textResponse,
-		conditions: {
-			amnesia: !validityCheck?.valid && validityCheck?.handled?.isRequired && validityCheck?.handled?.executed,
-			imagine: callResponse.includes("!gen"),
-		},
-	});
+		const { responseMsg, events } = await modelInteractions.messageEvent.createLegacyResponse({
+			textResponse,
+			conditions: {
+				amnesia: !validityCheck?.valid && validityCheck?.handled?.isRequired && validityCheck?.handled?.executed,
+				imagine: callResponse.includes("!gen"),
+			},
+		});
 
-	if (responseMsg && callResponse.includes("!gen"))
-		return await modelInteractions.messageEvent.handleImageModelCall({ genData, textResponse, responseMsg, events });
+		if (responseMsg && callResponse.includes("!gen"))
+			return await modelInteractions.messageEvent.handleLegacyImageModelCall({
+				genData,
+				textResponse,
+				responseMsg,
+				events,
+			});
+
+		return;
+	}
+
+	if (response?.length === 0 || response === "") return await message.react("⚠️").catch(() => false);
+
+	const replyContent = modelInteractions.response.format(response);
+	const reply = await message
+		.reply({ content: replyContent.content, files: replyContent.files, failIfNotExists: true })
+		.catch(() => false);
+
+	if (runners.length > 0) {
+		const postRunners = await modelInteractions.messageEvent.postSend({ runners, message: reply });
+		const mergedFiles = [...replyContent.files, ...postRunners.results];
+		return await reply
+			.edit({ content: replyContent.content, files: mergedFiles, failIfNotExists: true })
+			.catch(() => false);
+	}
 };
 
 /** @type {import('./index.js').Event<Events.MessageCreate>} */
