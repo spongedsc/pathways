@@ -9,7 +9,7 @@ import { Logger } from "../logger.js";
 /**
  * @enum {CallsystemCapabilities}
  */
-export const VALID_CAPABILITIES = ["super", "text", "image", "tools"];
+export const VALID_CAPABILITIES = ["text", "vision", "image", "ears", "audio", "tools", "legacy"];
 
 /**
  * @typedef {object} CallsystemActivationResponse The response to a callsystem activation request
