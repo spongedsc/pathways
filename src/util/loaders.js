@@ -2,10 +2,6 @@ import { readdir, stat } from "node:fs/promises";
 import { URL } from "node:url";
 import { predicate as commandPredicate } from "../commands/index.js";
 import { predicate as eventPredicate } from "../events/index.js";
-import { readdir, stat } from 'node:fs/promises';
-import { URL } from 'node:url';
-import { predicate as commandPredicate } from '../commands/index.js';
-import { predicate as eventPredicate } from '../events/index.js';
 import { basename } from "node:path";
 
 /**
