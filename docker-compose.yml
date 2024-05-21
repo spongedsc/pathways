@@ -1,6 +1,6 @@
-name: Pathways
+name: pathways
 services:
-  Pathways:
+  pathways:
     image: "ghcr.io/spongedsc/pathways:latest"
     env_file:
       - ./.env
