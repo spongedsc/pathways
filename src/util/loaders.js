@@ -1,7 +1,8 @@
-import { readdir, stat } from 'node:fs/promises';
-import { URL } from 'node:url';
-import { predicate as commandPredicate } from '../commands/index.js';
-import { predicate as eventPredicate } from '../events/index.js';
+import { readdir, stat } from "node:fs/promises";
+import { URL } from "node:url";
+import { predicate as commandPredicate } from "../commands/index.js";
+import { predicate as eventPredicate } from "../events/index.js";
+import { basename } from "node:path";
 
 /**
  * A predicate to check if the structure is valid.
@@ -19,7 +20,7 @@ import { predicate as eventPredicate } from '../events/index.js';
  * @param {boolean} recursive - Whether to recursively load the structures in the directory
  * @returns {Promise<T[]>}
  */
-export async function loadStructures(dir, predicate, recursive = true) {
+export async function loadStructures(dir, predicate, recursive = true, allowIndex = false) {
 	// Get the stats of the directory
 	const statDir = await stat(dir);
 
@@ -38,7 +39,7 @@ export async function loadStructures(dir, predicate, recursive = true) {
 	// Loop through all the files in the directory
 	for (const file of files) {
 		// If the file is index.js or the file does not end with .js, skip the file
-		if (file === 'index.js' || !file.endsWith('.js')) {
+		if (file === "index.js" || !file.endsWith(".js")) {
 			continue;
 		}
 
@@ -47,7 +48,15 @@ export async function loadStructures(dir, predicate, recursive = true) {
 
 		// If the file is a directory and recursive is true, recursively load the structures in the directory
 		if (statFile.isDirectory() && recursive) {
-			structures.push(...(await loadStructures(`${dir}/${file}`, predicate, recursive)));
+			const dirName = basename(file);
+			const recur = await loadStructures(new URL(`${dir}${dirName}`), predicate, recursive, allowIndex);
+			structures.push(...recur);
+			continue;
+		}
+
+		// If the file is index.js or the file does not end with .js, skip the file
+		// If allowIndex is true, then index.js is allowed
+		if ((file === "index.js" && !allowIndex) || !file.endsWith(".js")) {
 			continue;
 		}
 
