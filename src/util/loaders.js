@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import { URL } from "node:url";
 import { predicate as commandPredicate } from "../commands/index.js";
 import { predicate as eventPredicate } from "../events/index.js";
+import { predicate as callsystemPredicate } from "../lib/callsystems/index.js";
 import { basename } from "node:path";
 
 /**
@@ -89,4 +90,15 @@ export async function loadCommands(dir, recursive = true) {
  */
 export async function loadEvents(dir, recursive = true) {
 	return loadStructures(dir, eventPredicate, recursive);
+}
+
+/**
+ * @param {import('node:fs').PathLike} dir
+ * @param {boolean} [recursive]
+ * @returns {Promise<Map<string,import('../lib/callsystems/index.js).Callsystem[]>>}
+ */
+export async function loadCallsystems(dir, recursive = true, allowIndex = true) {
+	const structs = await loadStructures(dir, callsystemPredicate, recursive, allowIndex);
+
+	return structs.reduce((acc, cur) => acc.set(cur.packageId + "-" + cur.version, cur), new Map());
 }
