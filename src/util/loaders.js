@@ -39,11 +39,6 @@ export async function loadStructures(dir, predicate, recursive = true, allowInde
 
 	// Loop through all the files in the directory
 	for (const file of files) {
-		// If the file is index.js or the file does not end with .js, skip the file
-		if (file === "index.js" || !file.endsWith(".js")) {
-			continue;
-		}
-
 		// Get the stats of the file
 		const statFile = await stat(new URL(`${dir}/${file}`));
 
