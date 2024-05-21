@@ -1,7 +1,7 @@
-name: spongechat
+name: Pathways
 services:
-  spongechat:
-    image: "ghcr.io/spongedsc/spongechat:dev-v2"
+  Pathways:
+    image: "ghcr.io/spongedsc/pathways:latest"
     env_file:
       - ./.env
     environment:

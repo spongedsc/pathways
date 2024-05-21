@@ -1,12 +1,12 @@
 import { Plugin } from "release-it";
 import { WorkersAI } from "../../src/util/models/index.js";
-class SpongeChatReleaseItPlugin extends Plugin {
-	static disablePlugin(options) {}
+class PathwaysReleaseItPlugin extends Plugin {
+	static disablePlugin(options) { }
 
 	async beforeBump() {
 		const { accountId, token, defaultModel, releaseNotes } = this.getContext();
 		if (!accountId || !token) {
-			this.log.error("SpongeChat: Missing accountId or token");
+			this.log.error("Pathways: Missing accountId or token");
 			return false;
 		}
 		const workers = new WorkersAI({
@@ -54,7 +54,7 @@ class SpongeChatReleaseItPlugin extends Plugin {
 				return false;
 			});
 		if (!notesOutput) {
-			this.log.error("SpongeChat: Couldn't generate a release note for " + version);
+			this.log.error("Pathways: Couldn't generate a release note for " + version);
 			return false;
 		}
 		this.log.info(`Created a release note for ${version} (using ${workers.defaultModel})`);
@@ -66,4 +66,4 @@ class SpongeChatReleaseItPlugin extends Plugin {
 	}
 }
 
-export default SpongeChatReleaseItPlugin;
+export default PathwaysReleaseItPlugin;
