@@ -44,9 +44,33 @@ An array of capabilities that the callsystem supports. Valid capabilities are li
 The main lifecycle function for the callsystem. Model calls and context should be handled here.
 
 ### CallsystemStd
+```js
+class CallsystemStd {
+    constructor({ callsystemName }) {
+        this.callsystem = callsystemName;
+    }
+    
+    static conditions(message, env) {} // => boolean
+    responseTransform({ content, files }) {} // => object
+    log({ message, level = "default" }) {} // => void
+}
+```
 `CallsystemStd` provides a standard library of helper functions and accessors for developing a callsystem. Standard library functions are conformant to the standards listed in this document.
 
 Usage of `CallsystemStd` is not required, but it is highly recommended for consistency.
+
+#### Static methods
+##### `conditions(message, env)` -> `boolean`
+This method is used by the `messageCreate` event to determine whether or not the message meets the conditions for passive activation.
+
+This method should not be used as the callsystem's activation presumes that `conditions` returns `true`, but the method is exposed for convenience.
+
+#### Instance methods
+##### `responseTransform({ content, files })` -> `object`
+Transforms the desired response and file attachments into a standardised format and output.
+
+##### `log({ message, level = "default" })` -> `void`
+Forwards a message to the logger. You should use this method as the logger function instead of `console.log`.
 
 
 ## Types
