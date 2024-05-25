@@ -36,6 +36,11 @@ The human-readable name. This is used in the logger and when switching the calls
 ##### `version()` -> `String`
 This is the version of the callsystem. This value is used to organise multiple versions of the same callsystem when a callsystem with versioning is used.
 
+##### `releaseDate()` -> `Date`
+This is the release date of the callsystem. This value is used to sort the callsystems with versioning in order to satisfy the specification's requirement of flexible versioning schemes.
+
+If the release date is not specified, Core will use the current date.
+
 ##### `capabilities()` -> `CallsystemCapabilities[]`
 An array of capabilities that the callsystem supports. Valid capabilities are listed in the [CallsystemCapabilities](#callsystemcapabilities) enum.
 

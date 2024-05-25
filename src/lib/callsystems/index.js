@@ -138,6 +138,21 @@ export class Callsystem {
 	}
 
 	/**
+     * This should return a Date object corresponding to the release date of this release.
+     * This is used for sorting purposes. Otherwise, Core will use the current date.
+     * @returns {Date} A Date object corresponding to the release date of this release.
+     * @example 
+    class Legacy extends Callsystem {
+       static get releaseDate() {
+           return new Date("2024-05-25");
+       }
+    };
+     */
+	static get releaseDate() {
+		return new Date("2024-05-01");
+	}
+
+	/**
 	 * This should always return a static array of what the callsystem supports.
 	 * See CallsystemCapabilities for a list of valid capabilities.
      * @example 
