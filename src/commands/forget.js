@@ -45,25 +45,25 @@ export default {
 
 		try {
 			const request = await fetch(
-				`${process.env.WASTEBIN_HOST}/`,
+				`${process.env.MEMVIEW_HOST}/create`,
 				{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
+						"Authorization": `Bearer ${process.env.MEMVIEW_KEY}`,
 					},
 					body: JSON.stringify({
-						text: log.toString("utf-8"),
-						extension: "md",
+						content: log.toString("utf-8"),
 					}),
 				},
 			).catch((e) => {
-				console.error("Error uploading logs to wastebin: " + e);
+				console.error("Error uploading logs to memory viewer: " + e);
 				return false;
 			});
 
 			const button = new ButtonBuilder()
 				.setLabel('View cleared memories')
-				.setURL(request !== false ? `${process.env.WASTEBIN_HOST}${(await request.json()).path}` : 'https://blahaj.ca/')
+				.setURL(request !== false ? `${process.env.MEMVIEW_HOST}/${(await request.json()).id}` : 'https://blahaj.ca/')
 				.setStyle(ButtonStyle.Link);
 
 			await interaction?.editReply({
