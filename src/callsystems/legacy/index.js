@@ -19,6 +19,10 @@ export default class Legacy extends Callsystem {
 		return "2.0.1";
 	}
 
+	static get releaseDate() {
+		return new Date("2024-05-25");
+	}
+
 	static get capabilities() {
 		return ["legacy"];
 	}
