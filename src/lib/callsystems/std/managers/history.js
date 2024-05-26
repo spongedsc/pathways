@@ -61,25 +61,25 @@ export class HistoryManager {
 
 		if (typeof content !== "string") return content;
 
-		const randomisedVars = Object.keys(this.options.variables).reduce((acc, key) => {
+		const randomisedVars = Object.keys(this.options.variables).map((key) => {
 			const randomId = nanoid();
 			return {
 				id: `{_${randomId}}`,
-				trueKey: key,
-				value: variables[key],
+				trueId: key,
+				value: this.options.variables[key],
 			};
-		}, []);
+		});
 
 		// replace all variable expressions with randomised ID expressions
 		const sanitisedTemplate = Object.keys(this.options.variables).reduce((acc, key) => {
-			const variable = randomisedVars.find((v) => v.trueKey === key);
+			const variable = randomisedVars.find((v) => v.trueId === key);
 			return acc.replaceAll(key, variable.id);
 		}, template || "%RESPONSE%");
 
 		// replace all sanitised variable sequences in the content with their values
 		// %RESPONSE% and {RESPONSE} are special variables that are replaced with the response. these are not included here for safety
 		const loadedTemplate = Object.keys(this.options.variables).reduce((acc, key) => {
-			const variable = randomisedVars.find((v) => v.id === key);
+			const variable = randomisedVars.find((v) => v.trueId === key);
 			return acc.replaceAll(variable.id, variable.value);
 		}, sanitisedTemplate);
 
