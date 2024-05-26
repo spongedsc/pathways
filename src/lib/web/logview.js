@@ -12,7 +12,6 @@ export class Logview {
 
 	async create(content) {
 		const baseURL = new URL(this.host);
-		console.log(baseURL.origin + "/create");
 		const request = await fetch(baseURL.origin + "/create", {
 			method: "POST",
 			headers: {
@@ -26,7 +25,7 @@ export class Logview {
 
 		return {
 			...request,
-			url: baseURL.origin + "/" + r.id,
+			url: baseURL.origin + "/" + request.id,
 		};
 	}
 }
