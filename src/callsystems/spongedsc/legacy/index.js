@@ -1,5 +1,5 @@
-import { ModelInteractions } from "../../util/models/index.js";
-import { Callsystem } from "../../lib/callsystems/index.js";
+import { ModelInteractions } from "../../../util/models/index.js";
+import { Callsystem } from "../../../lib/callsystems/index.js";
 
 export default class Legacy extends Callsystem {
 	constructor(opts) {
@@ -29,15 +29,7 @@ export default class Legacy extends Callsystem {
 
 	async activate() {
 		const { message, client, env } = this;
-		const modelInteractions = new ModelInteractions({
-			message,
-			kv: client.kv,
-			instructionSet: client.tempStore.get("instructionSet") || env.MODEL_LLM_PRESET || "default",
-			baseHistory: [],
-			accountId: env.CLOUDFLARE_ACCOUNT_ID,
-			token: env.CLOUDFLARE_ACCOUNT_TOKEN,
-			model: "@cf/meta/llama-3-8b-instruct",
-		});
+		const modelInteractions = this.std.modelInteractions;
 
 		const formattedMessage = await modelInteractions.response.formatUserMessage();
 		const validityCheck = await modelInteractions.messageEvent.validateHistory();
