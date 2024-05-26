@@ -6,15 +6,8 @@ export class Logview {
 		this.logger = new Logger({ callsystem: "web logview" });
 	}
 
-	async get(id) {
-		const request = await fetch(`${this.host}/${id}`, {
-			method: "GET",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${this.key}`,
-			},
-		});
-		return request.json();
+	async get() {
+		return {};
 	}
 
 	async create(content) {
