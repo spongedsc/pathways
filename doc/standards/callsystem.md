@@ -18,6 +18,7 @@ class Callsystem {
     static get packageId() {}
     static get name() {}
     static get version() {}
+    static get releaseDate() {}
     static get capabilities() {}
     async activate() {}
 }
