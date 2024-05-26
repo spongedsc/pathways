@@ -26,15 +26,15 @@ export const VALID_CAPABILITIES = ["text", "vision", "image", "ears", "audio", "
  * CallsystemStd is not a required
  */
 export class CallsystemStd {
-	constructor({ env, callsystemName, kv, instructionSet, callsystemOptions, managerOptions }) {
+	constructor({ env, callsystemName, kv, instructionSet, modelInteractionsOptions, managerOptions }) {
 		this.callsystem = callsystemName;
 		this.services = {
 			Logview: new Logview({ host: env?.WEB_HOIST, key: env?.WEB_KEY }),
 			kv,
-			ModelInteractions: new ModelInteractions(callsystemOptions),
+			ModelInteractions: new ModelInteractions(modelInteractionsOptions),
 		};
 		this.managers = {
-			history: new HistoryManager({ ...callsystemOptions, ...managerOptions }),
+			history: new HistoryManager({ ...modelInteractionsOptions, ...managerOptions }),
 		};
 	}
 
