@@ -42,12 +42,13 @@ export class Logger {
 		this.callsystem = callsystem;
 	}
 	callers({ module = "default" }) {
+		const moduleLogLevel = logLevels[module] || logLevels.default;
 		const moduleCaller = moduleLogLevel?.caller || chalk.bold.white;
 		const moduleName = moduleLogLevel?.name || module || "Legacy";
 
 		return {
 			moduleCaller,
-			moduleName,
+			moduleName: moduleName.toUpperCase(),
 		};
 	}
 
