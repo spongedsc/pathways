@@ -13,6 +13,36 @@ SpongeAss keeps responses short and human-like.`,
 
 export const personas = {
 	default: {
+		id: "p.spongedsc.default",
+		name: "Default",
+		messages: [
+			{
+				role: "system",
+				content: dedent(instructionSets.default),
+			},
+		],
+	},
+	defaultStrictImages: {
+		id: "p.spongedsc.defaultStrictImages",
+		name: "Default Strict Images",
+		messages: [
+			{
+				role: "system",
+				content: dedent(instructionSets.defaultStrictImages),
+			},
+		],
+	},
+	legacy: {
+		id: "p.spongedsc.legacy",
+		name: "Legacy",
+		messages: [
+			{
+				role: "system",
+				content: dedent(instructionSets.default),
+			},
+		],
+	},
+	spongeass: {
 		id: "p.spongedsc.spongeass",
 		name: "SpongeAss",
 		messages: [
