@@ -1,4 +1,3 @@
-import { ModelInteractions } from "../../../util/models/index.js";
 import { Callsystem } from "../../../lib/callsystems/index.js";
 
 export default class Legacy extends Callsystem {
