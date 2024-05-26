@@ -1,6 +1,7 @@
 import { ModelInteractions } from "../util/models/index.js";
-import { fetch } from "undici";
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
+import { Logview } from "../lib/web/logview.js";
+import { Logger } from "../lib/logger.js";
 
 /** @type {import('./index.js').Command} */
 export default {
@@ -18,6 +19,8 @@ export default {
 			baseHistory: [],
 			model: "@cf/meta/llama-3-8b-instruct",
 		});
+
+		const logview = new Logview({ host: process.env.WEB_HOST, key: process.env.WEB_KEY });
 
 		const { log, length } = await modelInteractions.history
 			.formatLog({
@@ -44,26 +47,10 @@ export default {
 		if (length === 0) return await interaction.editReply({ content: toSay });
 
 		try {
-			const request = await fetch(
-				`${process.env.MEMVIEW_HOST}/create`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						"Authorization": `Bearer ${process.env.MEMVIEW_KEY}`,
-					},
-					body: JSON.stringify({
-						content: log.toString("utf-8"),
-					}),
-				},
-			).catch((e) => {
-				console.error("Error uploading logs to memory viewer: " + e);
-				return false;
-			});
-
+			const request = await logview.create(log.toString("utf-8"));
 			const button = new ButtonBuilder()
-				.setLabel('View cleared memories')
-				.setURL(request !== false ? `${process.env.MEMVIEW_HOST}/${(await request.json()).id}` : 'https://blahaj.ca/')
+				.setLabel("View cleared memories")
+				.setURL(request !== false ? request.url : "https://blahaj.ca/")
 				.setStyle(ButtonStyle.Link);
 
 			await interaction?.editReply({
@@ -74,8 +61,19 @@ export default {
 
 			return;
 		} catch (e) {
+			new Logger({ callsystem: "web logview" }).error("Error uploading logs to memory viewer: " + e, {
+				module: "web logview",
+			});
 			console.error(e);
-			return interaction.editReply({ content: toSay });
+			return interaction.editReply({
+				content: toSay,
+				files: [
+					{
+						attachment: log,
+						name: "context.md",
+					},
+				],
+			});
 		}
 	},
 };
