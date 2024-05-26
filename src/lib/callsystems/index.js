@@ -1,5 +1,7 @@
-import { WorkersAI } from "../../util/models/index.js";
+import { ModelInteractions, WorkersAI } from "../../util/models/index.js";
 import { Logger } from "../logger.js";
+import { Logview } from "../web/logview.js";
+import { HistoryManager } from "./std/managers/history.js";
 
 /**
  * @typedef {string} CallsystemCapabilities
@@ -18,9 +20,38 @@ export const VALID_CAPABILITIES = ["text", "vision", "image", "ears", "audio", "
  * @property {object | null} context A context object that can be used to store any additional data (i.e. message/user ID)
  */
 
+/**
+ * The Callsystem standard library provides a set of standardised helper functions and accessors for the callsystem to interact with elements outside of the callsystem's scope/domain.
+ *
+ * CallsystemStd is not a required
+ */
 export class CallsystemStd {
-	constructor({ callsystemName }) {
+	constructor({ env, callsystemName, kv, instructionSet, callsystemOptions, managerOptions }) {
 		this.callsystem = callsystemName;
+		this.services = {
+			Logview: new Logview({ host: env?.WEB_HOIST, key: env?.WEB_KEY }),
+			kv,
+			ModelInteractions: new ModelInteractions(callsystemOptions),
+		};
+		this.managers = {
+			history: new HistoryManager({ ...callsystemOptions, ...managerOptions }),
+		};
+	}
+
+	get kv() {
+		return this.services.kv;
+	}
+
+	get logview() {
+		return this.services.Logview;
+	}
+
+	get modelInteractions() {
+		return this.services.ModelInteractions;
+	}
+
+	get history() {
+		return this.managers.history;
 	}
 
 	static conditions(message, env) {
@@ -66,7 +97,7 @@ export class CallsystemStd {
 		const logger = new Logger({
 			callsystem: this.callsystem || "Legacy",
 		});
-		return logger.log(message, { level, module: "ai" });
+		return logger.log(message, { level, module: "callsystem" });
 	}
 }
 
@@ -77,12 +108,35 @@ export class Callsystem {
 		this.message = message;
 		this.defaultModel = defaultModel;
 		this.defaultProvider = defaultProvider;
+
 		this.provider = new WorkersAI({
 			accountId: this.env?.CLOUDFLARE_ACCOUNT_ID,
 			token: this.env?.CLOUDFLARE_ACCOUNT_TOKEN,
 			defaultModel: this.defaultModel,
 		});
-		this.std = new CallsystemStd({ callsystemName: this.name });
+
+		/**
+		 * @type {CallsystemStd}
+		 */
+		this.std = new CallsystemStd({
+			callsystemName: this.constructor.name,
+			kv: client?.kv,
+			env,
+			instructionSet: client?.tempStore.get("instructionSet") || env?.MODEL_LLM_PRESET || "default",
+			modelInteractionsOptions: {
+				message,
+				kv: client?.kv,
+				instructionSet: client?.tempStore.get("instructionSet") || env?.MODEL_LLM_PRESET || "default",
+				baseHistory: [],
+				accountId: env?.CLOUDFLARE_ACCOUNT_ID,
+				token: env?.CLOUDFLARE_ACCOUNT_TOKEN,
+				model: "@cf/meta/llama-3-8b-instruct",
+			},
+			managerOptions: {
+				...(this.constructor.managerOptions || {}),
+				kv: client?.kv,
+			},
+		});
 	}
 
 	/**
@@ -174,6 +228,15 @@ export class Callsystem {
     */
 	static get capabilities() {
 		return [];
+	}
+
+	/**
+	 * This should return an object containing any options that should be passed to CallsystemStd managers.
+	 *
+	 * @returns {object} Options to be passed to CallsystemStd's managers
+	 */
+	static get managerOptions() {
+		return {};
 	}
 
 	/**
