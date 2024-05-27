@@ -64,9 +64,26 @@ export class Logger {
 		return `${levelCaller(levelName)} ${moduleCaller(formattedCaller)} ${formattedMessage}`;
 	}
 
-	log(message, { module = "default", level = "default" }) {
+	log(message, { module = "default", level = "default", mock = false }) {
 		const formatted = this.fmt(message, level, module);
-		console.log(formatted);
+
+		if (mock === true) return formatted;
+
+		switch (level) {
+			case "info":
+				console.info(formatted);
+				break;
+			case "error":
+				console.error(formatted);
+				break;
+			case "warn":
+				console.warn(formatted);
+				break;
+			default:
+				console.log(formatted);
+				break;
+		}
+
 		return formatted;
 	}
 
