@@ -44,7 +44,7 @@ export async function loadStructures(dir, predicate, recursive = true, allowInde
 		// If the file is a directory and recursive is true, recursively load the structures in the directory
 		if (statFile.isDirectory() && recursive) {
 			const dirName = basename(file);
-			const recur = await loadStructures(new URL(`${dir}${dirName}`), predicate, recursive, allowIndex);
+			const recur = await loadStructures(new URL(`${dir}/${dirName}`), predicate, recursive, allowIndex);
 			structures.push(...recur);
 			continue;
 		}
