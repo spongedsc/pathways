@@ -38,6 +38,24 @@ export class CallsystemUnitTestSuite {
 		return this;
 	}
 
+	async handlePreflightChecks({ message, client }) {
+		if (!message?.mentions?.has(client?.user?.id)) return false;
+
+		if (!message.content.endsWith("cuts.run")) {
+			await message
+				.reply(
+					dedent`
+            The current Pathways instance has a test callsystem configured. Contact an administrator for further assistance.\n
+            (Ping me with a message ending in \`cuts.run\` to run unit tests with CUTS.)
+            `,
+				)
+				.catch(() => {});
+			return false;
+		}
+
+		return true;
+	}
+
 	async execute() {
 		return await Promise.all(
 			this.tests.map(async (test) => {
