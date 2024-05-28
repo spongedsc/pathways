@@ -48,25 +48,29 @@ export default class HistoryConsoleUnitTest extends Callsystem {
 				id: "log",
 				name: "Log",
 				runTest: async () => this.std.log({ message: "Hello world!", level: "error", mock: true }),
-				expects: `${chalk.bold.red("ERROR")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!`,
+				expects: (result) =>
+					`${chalk.bold.red("ERROR")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!` === result,
 			},
 			{
 				id: "info",
 				name: "Info",
 				runTest: async () => this.std.log({ message: "Hello world!", level: "info", mock: true }),
-				expects: `${chalk.bold.blue("INFO")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!`,
+				expects: (result) =>
+					`${chalk.bold.blue("INFO")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!` === result,
 			},
 			{
 				id: "warn",
 				name: "Warn",
 				runTest: async () => this.std.log({ message: "Hello world!", level: "warn", mock: true }),
-				expects: `${chalk.bold.yellow("WARN")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!`,
+				expects: (result) =>
+					`${chalk.bold.yellow("WARN")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!` === result,
 			},
 			{
 				id: "error",
 				name: "Error",
 				runTest: async () => this.std.log({ message: "Hello world!", level: "error", mock: true }),
-				expects: `${chalk.bold.red("ERROR")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!`,
+				expects: (result) =>
+					`${chalk.bold.red("ERROR")} ${chalk.bold.cyan("CS/UT/stdlib: Logger")} Hello world!` === result,
 			},
 		]);
 
