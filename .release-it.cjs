@@ -6,7 +6,7 @@ module.exports = {
 	github: {
 		release: true,
 		draft: true,
-		web: true,
+		web: false,
 		releaseName: "${version}: ",
 		releaseNotes: async (context) => {
 			return context.notesOutput;
