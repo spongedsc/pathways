@@ -99,12 +99,12 @@ export class HistoryManager {
 			.map((m) => JSON.parse(m))
 			// sort by timestamp; if the timestamps are the same, sort by sequence
 			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return b.context.sequence - a.context.sequence;
+				if (a.sequenceId === b.sequenceId) return b.context?.sequence - a.context?.sequence;
 				return new Date(a.timestamp) - new Date(b.timestamp);
 			})
 			.slice(0, this.options.contextWindow)
 			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return a.context.sequence - b.context.sequence;
+				if (a.sequenceId === b.sequenceId) return a.context?.sequence - b.context?.sequence;
 				return new Date(b.timestamp) - new Date(a.timestamp);
 			});
 
@@ -152,10 +152,10 @@ export class HistoryManager {
 			);
 		};
 
-		const base = returnEverything === true ? await this.everything(key) : await this.get(key);
+		const base = returnEverything === true ? await this.everything(key, includeBase) : await this.get(key, includeBase);
 		await runOperation();
 		return [
-			...(includeBase ? base : []),
+			...base,
 			{ contextId, role, content: this.transformContent(content), context: this.transformContext(context) },
 		];
 	}
@@ -174,20 +174,27 @@ export class HistoryManager {
 			);
 		};
 
-		await runOperation();
 		const base = returnEverything === true ? await this.everything(key, includeBase) : await this.get(key, includeBase);
-		return [...base];
+		await runOperation();
+		return [...base, ...mappedMsgs];
 	}
 
 	async remove(key, contextId, type = ["system", "assistant", "user"]) {
 		const base = await this.everything(key);
 		const filtered = base?.filter((m) => (m.contextId !== contextId || !type.includes(m.role)) && !m.base);
 		await this.kv.del(this.prefixKey(key));
+		if (filtered.length === 0) return [];
 		await this.kv.lPush(this.prefixKey(key), ...filtered.map((m) => JSON.stringify(m)));
 		return filtered;
 	}
 
 	async removeAll(key, type = ["system", "assistant", "user"]) {
+		if (type.includes("system") && type.includes("assistant") && type.includes("user")) {
+			await this.kv.del(this.prefixKey(key));
+
+			return [];
+		}
+
 		const base = await this.everything(key);
 		const filtered = base?.filter((m) => !type.includes(m.role) && !m.base);
 		await this.kv.del(this.prefixKey(key));
