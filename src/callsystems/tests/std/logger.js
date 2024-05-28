@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { Callsystem } from "../../../../lib/callsystems/index.js";
+import { Callsystem } from "../../../lib/callsystems/index.js";
 import dedent from "dedent";
 
 export default class HistoryConsoleUnitTest extends Callsystem {
