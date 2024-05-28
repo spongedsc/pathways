@@ -1,8 +1,4 @@
-import { Collection } from "discord.js";
 import { Callsystem } from "../../lib/callsystems/index.js";
-import { nanoid } from "nanoid";
-import lodash from "lodash";
-
 // from https://github.com/prathercc/date-to-discord-snowflake/blob/main/index.js
 const generateSnowflake = (date = new Date()) =>
 	((BigInt(date.valueOf()) - BigInt(1420070400000)) << BigInt(22)).toString();
