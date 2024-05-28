@@ -11,7 +11,7 @@ export default class HistoryConsoleUnitTest extends Callsystem {
 	}
 
 	static get name() {
-		return "Callsystem console unit tests: History stdlib";
+		return "UT/stdlib: History";
 	}
 
 	static get version() {
