@@ -2,6 +2,7 @@ import { ModelInteractions, WorkersAI } from "../../util/models/index.js";
 import { Logger } from "../logger.js";
 import { Logview } from "../web/logview.js";
 import { HistoryManager } from "./std/managers/history.js";
+import { CallsystemUnitTestSuite } from "./std/managers/cuts.js";
 
 /**
  * @typedef {string} CallsystemCapabilities
@@ -26,16 +27,32 @@ export const VALID_CAPABILITIES = ["text", "vision", "image", "ears", "audio", "
  * CallsystemStd is not a required
  */
 export class CallsystemStd {
-	constructor({ env, callsystemName, kv, instructionSet, modelInteractionsOptions, managerOptions }) {
+	constructor({ env, callsystemName, packageId, kv, instructionSet, modelInteractionsOptions, managerOptions }) {
 		this.callsystem = callsystemName;
-		this.services = {
+		this.packageId = packageId;
+		this._services = {
 			Logview: new Logview({ host: env?.WEB_HOIST, key: env?.WEB_KEY }),
 			kv,
 			ModelInteractions: new ModelInteractions(modelInteractionsOptions),
 		};
-		this.managers = {
+		this._managers = {
 			history: new HistoryManager({ ...modelInteractionsOptions, ...managerOptions }),
+			cuts: new CallsystemUnitTestSuite({
+				packageId: packageId,
+				name: callsystemName,
+				loggerOptions: {
+					callsystem: callsystemName,
+				},
+			}),
 		};
+	}
+
+	get services() {
+		return this._services;
+	}
+
+	get managers() {
+		return this._managers;
 	}
 
 	get kv() {
@@ -52,6 +69,10 @@ export class CallsystemStd {
 
 	get history() {
 		return this.managers.history;
+	}
+
+	get cuts() {
+		return this.managers.cuts;
 	}
 
 	static conditions(message, env) {
@@ -93,11 +114,11 @@ export class CallsystemStd {
 		};
 	}
 
-	log({ message, level = "default" }) {
+	log({ message, level = "default", ...options }) {
 		const logger = new Logger({
 			callsystem: this.callsystem || "Legacy",
 		});
-		return logger.log(message, { level, module: "callsystem" });
+		return logger.log(message, { level, module: "callsystem", ...options });
 	}
 }
 
@@ -120,6 +141,7 @@ export class Callsystem {
 		 */
 		this.std = new CallsystemStd({
 			callsystemName: this.constructor.name,
+			packageId: this.constructor.packageId,
 			kv: client?.kv,
 			env,
 			instructionSet: client?.tempStore.get("instructionSet") || env?.MODEL_LLM_PRESET || "default",
