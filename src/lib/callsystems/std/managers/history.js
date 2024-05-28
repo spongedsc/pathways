@@ -93,7 +93,7 @@ export class HistoryManager {
 	 * @param {*} key The key to fetch records from
 	 * @returns {Promise<object[]>} The last [contextWindow] records from the history
 	 */
-	async get(key) {
+	async get(key, includeBase = true) {
 		// get the last [contextWindow] messages
 		const request = (await this.kv.lRange(this.prefixKey(key), -(this.options.contextWindow + 2), -1))
 			.map((m) => JSON.parse(m))
@@ -108,7 +108,7 @@ export class HistoryManager {
 				return new Date(b.timestamp) - new Date(a.timestamp);
 			});
 
-		return [...this.baseHistory, ...request];
+		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
 
 	/**
@@ -116,7 +116,7 @@ export class HistoryManager {
 	 * @param {*} key The key to fetch records from
 	 * @returns {Promise<object[]>} All records from the history
 	 */
-	async everything(key) {
+	async everything(key, includeBase = true) {
 		const request = (await this.kv.lRange(this.prefixKey(key), 0, -1))
 			.map((m) => JSON.parse(m))
 			.reverse()
@@ -125,7 +125,7 @@ export class HistoryManager {
 				return new Date(b.timestamp) - new Date(a.timestamp);
 			});
 
-		return [...this.baseHistory, ...request];
+		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
 
 	/**
@@ -139,7 +139,7 @@ export class HistoryManager {
 	 * @param {boolean} returnEverything Whether to return the entire history after adding the record. Will only be triggered on `returnEverything = true`.
 	 * @returns {Promise<object[]>} The history after adding the record
 	 */
-	async add(key, { contextId, role, content, context }, returnEverything = false) {
+	async add(key, { contextId, role, content, context }, returnEverything = false, includeBase = true) {
 		const runOperation = async () => {
 			return await this.kv.lPush(
 				this.prefixKey(key),
@@ -155,12 +155,12 @@ export class HistoryManager {
 		const base = returnEverything === true ? await this.everything(key) : await this.get(key);
 		await runOperation();
 		return [
-			...base,
+			...(includeBase ? base : []),
 			{ contextId, role, content: this.transformContent(content), context: this.transformContext(context) },
 		];
 	}
 
-	async addMany(key, messages = [], returnEverything = false) {
+	async addMany(key, messages = [], returnEverything = false, includeBase = true) {
 		const sequenceId = nanoid();
 		const mappedMsgs = messages.map((m) => ({
 			...m,
@@ -175,7 +175,7 @@ export class HistoryManager {
 		};
 
 		await runOperation();
-		const base = returnEverything === true ? await this.everything(key) : await this.get(key);
+		const base = returnEverything === true ? await this.everything(key, includeBase) : await this.get(key, includeBase);
 		return [...base];
 	}
 
