@@ -7,11 +7,11 @@ export default class HistoryConsoleUnitTest extends Callsystem {
 	}
 
 	static get packageId() {
-		return "cs.tests.console.stdlib.history";
+		return "cs.tests.console.stdlib.non-cuts.history";
 	}
 
 	static get name() {
-		return "UT/stdlib: History";
+		return "UT/stdlib: History (non-cuts)";
 	}
 
 	static get version() {
