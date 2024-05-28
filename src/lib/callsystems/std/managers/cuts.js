@@ -57,9 +57,24 @@ export class CallsystemUnitTestSuite {
 	}
 
 	async execute() {
-		return await Promise.all(
+		const r = await Promise.all(
 			this.tests.map(async (test) => {
-				const result = await test.runTest();
+				if (test?.enabled === false) return null;
+				const result = await test.runTest().catch((e) => {
+					return { __cuts_fail: true, __cuts_result: e };
+				});
+
+				if (result?.__cuts_fail) {
+					this.logger.error(`${chalk.red("Failed")} test ${chalk.bold(test.id)}:`, { module: "callsystem" });
+					console.error(result?.__cuts_result);
+					return {
+						success: false,
+						name: test.name,
+						id: test.id,
+						result: result,
+					};
+				}
+
 				if (test.expects(result) !== true && result !== test.expects(result)) {
 					this.logger.error(`${chalk.red("Failed")} test ${chalk.bold(test.id)}:`, { module: "callsystem" });
 					console.error(result);
@@ -80,6 +95,8 @@ export class CallsystemUnitTestSuite {
 				}
 			}),
 		);
+
+		return r.filter((r) => r !== null);
 	}
 
 	async executeWithEmbed() {
