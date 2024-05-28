@@ -61,13 +61,14 @@ class CallsystemStd {
     constructor({ callsystemName, callsystemOptions, managerOptions }) {
         this.callsystem = callsystemName;
         this.services = {}; // Stores services (i.e. kv, logview, modelInteractions)
-        this.managers = {}; // Stores managers included in std (i.e. history)
+        this.managers = {}; // Stores managers included in std (i.e. history, cuts)
     }
     
     get kv() {} // => RedisClient
     get logview() {} // => Logview
     get modelInteractions() {} // => ModelInteractions
     get history() {} // => HistoryManager
+    get cuts() {} // => CallsystemUnitTestSuite
     
     static conditions(message, env) {} // => boolean
     responseTransform({ content, files }) {} // => object
@@ -101,6 +102,14 @@ CallsystemStd exposes an instance of ModelInteractions, a Legacy-era API for int
 
 ##### `history` -> `HistoryManager`
 HistoryManager is an API for managing the history of a callsystem.
+
+##### `cuts` -> `CallsystemUnitTestSuite`
+> [!WARNING]
+> `CallsystemUnitTestSuite` should only be used with call systems for unit testing.
+
+CallsystemUnitTestSuite (CUTS) is a helper class for unit testing callsystems. While not typically consumed by a standard callsystem, it is used for unit testing certain tools and features included in CallsystemStd.
+
+It is documented here for convenience, but you likely won't need to use this manager.
 
 #### Instance methods
 ##### `responseTransform({ content, files })` -> `object`
