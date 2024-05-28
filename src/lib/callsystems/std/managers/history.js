@@ -154,7 +154,10 @@ export class HistoryManager {
 
 		const base = returnEverything === true ? await this.everything(key) : await this.get(key);
 		await runOperation();
-		return [...base, { role, content: this.transformContent(content), context: this.transformContext(context) }];
+		return [
+			...base,
+			{ contextId, role, content: this.transformContent(content), context: this.transformContext(context) },
+		];
 	}
 
 	async addMany(key, messages = [], returnEverything = false) {
