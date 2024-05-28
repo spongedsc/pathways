@@ -70,8 +70,10 @@ export default class HistoryConsoleUnitTest extends Callsystem {
 			},
 		]);
 
-		const { embed: resultsEmbed } = await uts.executeWithEmbed();
+		const { embed: resultsEmbed, results } = await uts.executeWithEmbed();
 
 		await message.reply({ embeds: [resultsEmbed] });
+
+		return results;
 	}
 }
