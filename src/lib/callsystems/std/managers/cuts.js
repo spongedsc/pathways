@@ -60,8 +60,9 @@ export class CallsystemUnitTestSuite {
 		return await Promise.all(
 			this.tests.map(async (test) => {
 				const result = await test.runTest();
-				if (result !== test.expects) {
-					this.logger.error(`❌  Failed test ${chalk.bold(test.id)}`, { module: "callsystem" });
+				if (test.expects(result) !== true && result !== test.expects(result)) {
+					this.logger.error(`${chalk.red("Failed")} test ${chalk.bold(test.id)}:`, { module: "callsystem" });
+					console.error(result);
 					return {
 						success: false,
 						name: test.name,
@@ -69,7 +70,7 @@ export class CallsystemUnitTestSuite {
 						result: result,
 					};
 				} else {
-					this.logger.info(`✅  Passed test ${chalk.bold(test.id)}`, { module: "callsystem" });
+					this.logger.info(`${chalk.green("Passed")} test ${chalk.bold(test.id)}`, { module: "callsystem" });
 					return {
 						success: true,
 						name: test.name,
@@ -87,10 +88,11 @@ export class CallsystemUnitTestSuite {
 		const failed = results.filter((result) => result.success === false);
 		const passed = results.filter((result) => result.success === true);
 
-		const resultsEmbed = new EmbedBuilder()
-			.setTimestamp()
-			.setColor(0x00ff00)
-			.setTitle(`CUTS Results: ${this.packageId}`).setDescription(dedent`
+		// if 1 or more failed, set colour to red
+		const colour = failed.length > 0 ? 0xff0000 : 0x00ff00;
+
+		const resultsEmbed = new EmbedBuilder().setTimestamp().setColor(colour).setTitle(`CUTS Results: ${this.packageId}`)
+			.setDescription(dedent`
         # ${this.name}
         This is a test of the logger utilities in CallsystemsStd.
         ## Results
