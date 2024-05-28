@@ -111,8 +111,6 @@ export class CallsystemUnitTestSuite {
 		const resultsEmbed = new EmbedBuilder().setTimestamp().setColor(colour).setTitle(`CUTS Results: ${this.packageId}`)
 			.setDescription(dedent`
         # ${this.name}
-        This is a test of the logger utilities in CallsystemsStd.
-        ## Results
         - Passing: **${passed.length}/${results.length}**
         - Failing: **${failed.length}/${results.length}**
     `);

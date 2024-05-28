@@ -169,40 +169,5 @@ export default class HistoryConsoleUnitTest extends Callsystem {
 		await message.reply({ embeds: [resultsEmbed] });
 
 		return results;
-		/*
-		console.log("Remove all");
-		await this.std.history.removeAll(message?.channel?.id);
-
-		console.log("Push one");
-		console.log(
-			await this.std.history.add(message?.channel?.id, { role: "user", content: "test", contextId: message?.id }),
-		);
-		console.log("Push many");
-		console.log(
-			await this.std.history.addMany(message?.channel?.id, [
-				{ role: "user", content: "test 2", contextId: message?.id },
-				{ role: "user", content: "test 3", contextId: message?.id },
-				{ role: "user", content: "test 4", contextId: message?.id },
-				{ role: "user", content: "test 5", contextId: message?.id },
-				{ role: "user", content: "test 6", contextId: message?.id },
-			]),
-		);
-		console.log("Push one");
-		console.log(
-			await this.std.history.add(message?.channel?.id, { role: "user", content: "test", contextId: message?.id }),
-		);
-		console.log("Push many");
-		console.log(
-			await this.std.history.addMany(message?.channel?.id, [
-				{ role: "user", content: "test 2", contextId: message?.id },
-				{ role: "user", content: "test 3", contextId: message?.id },
-				{ role: "user", content: "test 4", contextId: message?.id },
-				{ role: "user", content: "test 5", contextId: message?.id },
-				{ role: "user", content: "test 6", contextId: message?.id },
-			]),
-		);
-		console.log("History");
-		console.log(await this.std.history.everything(message?.channel?.id));
-        */
 	}
 }
