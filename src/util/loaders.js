@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import { URL } from "node:url";
 import { predicate as commandPredicate } from "../commands/index.js";
 import { predicate as eventPredicate } from "../events/index.js";
+import { predicate as callsystemPredicate } from "../lib/callsystems/index.js";
 import { basename } from "node:path";
 
 /**
@@ -84,4 +85,31 @@ export async function loadCommands(dir, recursive = true) {
  */
 export async function loadEvents(dir, recursive = true) {
 	return loadStructures(dir, eventPredicate, recursive);
+}
+
+/**
+ * @param {import('node:fs').PathLike} dir
+ * @param {boolean} [recursive]
+ * @returns {Promise<Map<string,import('../lib/callsystems/index.js).Callsystem[]>>}
+ */
+export async function loadCallsystems(dir, recursive = true, allowIndex = true) {
+	const structs = await loadStructures(dir, callsystemPredicate, recursive, allowIndex);
+	const structMap = structs.reduce((acc, cur) => acc.set(cur.packageId + "-" + cur.version, cur), new Map());
+
+	// find all unique callsystem ids in the structMap using structs, then return the latest version of each callsystem
+	const callsystemsLatest = [...structMap.values()].reduce((acc, cur) => {
+		const callsystemKey = cur.packageId + "-latest";
+		if (!acc.has(callsystemKey)) {
+			acc.set(callsystemKey, cur);
+		} else {
+			const accClass = acc.get(callsystemKey);
+			const curClass = cur;
+			const latestVersion =
+				(accClass.releaseDate || new Date()) > (curClass.releaseDate || new Date()) ? acc.get(callsystemKey) : cur;
+			acc.set(callsystemKey, latestVersion);
+		}
+		return acc;
+	}, structMap);
+
+	return callsystemsLatest;
 }

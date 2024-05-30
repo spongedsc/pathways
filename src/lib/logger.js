@@ -41,8 +41,9 @@ export class Logger {
 	constructor({ callsystem = "default" }) {
 		this.callsystem = callsystem;
 	}
+
 	callers({ module = "default" }) {
-		const moduleLogLevel = logLevels[module] || logLevels.default;
+		const moduleLogLevel = modules[module] || modules.default;
 		const moduleCaller = moduleLogLevel?.caller || chalk.bold.white;
 		const moduleName = moduleLogLevel?.name || module || "Legacy";
 
@@ -57,9 +58,10 @@ export class Logger {
 		const levelName = logLevels[level || "default"]?.name.toUpperCase();
 		const levelCaller = logLevels[level || "default"]?.caller || chalk.bold.white;
 
-		const formatted = message.replaceAll("%LOGGER_VAR_CALLSYSTEM%", "CS/" + (this.callsystem || "Legacy"));
+		const formattedCaller = moduleName.replaceAll("%LOGGER_VAR_CALLSYSTEM%", "CS/" + (this.callsystem || "Legacy"));
+		const formattedMessage = message.replaceAll("%LOGGER_VAR_CALLSYSTEM%", "CS/" + (this.callsystem || "Legacy"));
 
-		return `${levelCaller(levelName)} ${moduleCaller(moduleName)} ${formatted}`;
+		return `${levelCaller(levelName)} ${moduleCaller(formattedCaller)} ${formattedMessage}`;
 	}
 
 	log(message, { module = "default", level = "default", mock = false }) {

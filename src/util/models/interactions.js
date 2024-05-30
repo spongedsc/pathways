@@ -16,7 +16,7 @@ export class InteractionHistory {
 		this.contextWindow = contextWindow || 10;
 		this.instructionSet = instructionSets[instructionSet || "default"];
 		this.baseHistory = [
-			...baseHistory,
+			...(baseHistory || []),
 			{
 				role: "system",
 				content: this.instructionSet,
