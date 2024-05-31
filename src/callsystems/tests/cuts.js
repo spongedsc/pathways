@@ -1,5 +1,5 @@
 import { Callsystem } from "../../lib/callsystems/index.js";
-// from https://github.com/prathercc/date-to-discord-snowflake/blob/main/index.js
+ 
 const generateSnowflake = (date = new Date()) =>
 	((BigInt(date.valueOf()) - BigInt(1420070400000)) << BigInt(22)).toString();
 
