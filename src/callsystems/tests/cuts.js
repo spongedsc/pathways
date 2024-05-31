@@ -1,6 +1,6 @@
 import { Callsystem } from "../../lib/callsystems/index.js";
  
-const generateSnowflake = (date = new Date()) =>
+ 
 	 
 
 const getResult = async ({ messageId, channel, reply, client, env }, tests) =>
