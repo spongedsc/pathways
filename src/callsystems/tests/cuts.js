@@ -1,7 +1,7 @@
 import { Callsystem } from "../../lib/callsystems/index.js";
  
 const generateSnowflake = (date = new Date()) =>
-	((BigInt(date.valueOf()) - BigInt(1420070400000)) << BigInt(22)).toString();
+	 
 
 const getResult = async ({ messageId, channel, reply, client, env }, tests) =>
 	await Promise.all(
