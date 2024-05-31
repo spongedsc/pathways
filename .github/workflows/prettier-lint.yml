@@ -4,11 +4,12 @@ on:
   push:
 
 jobs:
-  push-image:
+  prettier:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
 
       - uses: actionsx/prettier@v2
-      with:
-        args: --check .
+        with:
+          args: --check .
