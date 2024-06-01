@@ -1,7 +1,7 @@
 import { Plugin } from "release-it";
 import { WorkersAI } from "../../src/util/models/index.js";
 class PathwaysReleaseItPlugin extends Plugin {
-	static disablePlugin(options) { }
+	static disablePlugin(options) {}
 
 	async beforeBump() {
 		const { accountId, token, defaultModel, releaseNotes } = this.getContext();
