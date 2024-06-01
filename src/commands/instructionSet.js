@@ -11,7 +11,7 @@ export default {
 			o
 				.setName("preset")
 				.setDescription("Preset; map to => client.tempStore#instructionSet")
-				.setChoices(Object.keys(instructionSets).map((s) => ({ name: instructionSets[s]?.name || s, value: s })))
+				.setChoices(Object.keys(instructionSets).map((s) => ({ name: s, value: s })))
 				.setRequired(true),
 		)
 		.toJSON(),
@@ -35,7 +35,7 @@ export default {
 		});
 
 		console.log(
-			`${chalk.bold.green("AI")} Instruction set preset changed to ${chalk.bold(instructionSets[toOption]?.name || toOption)} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
+			`${chalk.bold.green("AI")} Instruction set preset changed to ${chalk.bold(toOption)} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
 		);
 
 		if (sync) {

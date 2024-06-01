@@ -1,10 +1,5 @@
 import { fetch } from "undici";
-import {
-	InteractionResponse,
-	InteractionHistory,
-	InteractionMessageEvent,
-	InteractionIntegrations,
-} from "./interactions.js";
+import { InteractionResponse, InteractionHistory, InteractionMessageEvent } from "./interactions.js";
 
 export class WorkersAI {
 	constructor(
@@ -60,17 +55,14 @@ export class ModelInteractions {
 		this.disabledModules = disabledModules;
 		this.history = disabledModules?.includes("history") ? null : new InteractionHistory(opts);
 		this.response = disabledModules?.includes("response") ? null : new InteractionResponse(opts);
-		this.integrations = disabledModules?.includes("integrations") ? null : new InteractionIntegrations(opts);
 		this.messageEvent = disabledModules?.includes("messageEvent")
 			? null
 			: new InteractionMessageEvent({
 					...opts,
 					interactionResponse: this.response,
 					interactionHistory: this.history,
-					interactionIntegrations: this.integrations,
 				});
 
 		this.model = opts?.model;
-		this.callsystem = opts?.callsystem;
 	}
 }

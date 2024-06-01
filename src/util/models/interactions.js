@@ -1,10 +1,6 @@
 import { fetch } from "undici";
 import { events, instructionSets } from "./constants.js";
 import { WorkersAI } from "./index.js";
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
-
-import { ImagineIntegration, QoTDIntegration } from "../integrations/index.js";
 
 export class InteractionHistory {
 	constructor(
@@ -18,39 +14,31 @@ export class InteractionHistory {
 	) {
 		this.kv = kv;
 		this.contextWindow = contextWindow || 10;
-		this.instructionSet = {
-			id: instructionSet,
-			...instructionSets[instructionSet || "default"],
-		};
+		this.instructionSet = instructionSets[instructionSet || "default"];
 		this.baseHistory = [
-			...(this.instructionSet?.instructions || [
-					{
-						role: "system",
-						content: this?.instructionSet,
-					},
-				] ||
-				[]),
 			...baseHistory,
+			{
+				role: "system",
+				content: this.instructionSet,
+			},
 		];
 		this.model = model;
 	}
 
-	async get({ key, instructionSet = this.instructionSet?.id, window = this.contextWindow }, all = false) {
-		const baseHistory = instructionSets[instructionSet]?.instructions || this.baseHistory;
+	async get({ key }, all = false) {
 		const fetchedMessages = (await this.kv.lRange(key, 0, -1))
-			.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 			.reverse()
 			.map((m) => JSON.parse(m))
 			// only return the last [contextWindow] messages
 			// if all is true, return all messages
-			.slice(0, all ? -1 : window || this.contextWindow)
+			.slice(0, all ? -1 : this.contextWindow)
 			.reduce((acc, item, index) => {
 				// this reducer is very.. redundant, but i'm adding it for later
 				acc.push(item);
 				return acc;
 			}, []);
 
-		return [...baseHistory, ...fetchedMessages];
+		return [...this.baseHistory, ...fetchedMessages];
 	}
 
 	async add(
@@ -87,9 +75,7 @@ export class InteractionHistory {
 				.lRange(key, 0, -1)
 				.then((r) => r.map((m) => JSON.parse(m)))
 				.catch(() => [])
-		)
-			.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-			.reverse();
+		).reverse();
 		const interactions = current?.filter(typeof filter === "function" ? filter : (f) => f);
 
 		const formatted = interactions
@@ -202,7 +188,7 @@ export class InteractionResponse {
 	}
 
 	formatAssistantMessage(content) {
-		return content?.trim();
+		return content.trim();
 	}
 
 	/**
@@ -221,12 +207,12 @@ export class InteractionResponse {
 	 * @param {string} event.status The status of the event
 	 * @returns {string} The formatted message
 	 * @example
-	 * const message = await this.formatLegacyOutput(content, event);
+	 * const message = await this.formatOutputMessage(content, event);
 	 * console.log(message);
 	 * // Outputs the formatted message
 	 */
 
-	formatLegacyOutput(content, allEvents = []) {
+	formatOutputMessage(content, allEvents = []) {
 		const bannerArr = allEvents
 			.map((event) => {
 				const eventData = events[event?.type];
@@ -241,103 +227,18 @@ export class InteractionResponse {
 		return banner + "\n" + content.trim();
 	}
 
-	format(input) {
-		if (!input)
-			return {
-				content: "",
-				files: [],
-			};
-
-		const content = input?.length >= 2000 ? "" : input;
-		const files = input?.length >= 2000 ? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }] : [];
-
-		return {
-			content,
-			files,
-		};
-	}
-
 	currentTemporalISO() {
 		return Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString();
 	}
 }
 
-export class InteractionIntegrations {
-	constructor(
-		{ message, kv, model, accountId, token, openaiToken, callsystem } = {
-			kv: null,
-			instructionSet: process.env.MODEL_LLM_PRESET || "default",
-			baseHistory: [],
-			model: "@cf/meta/llama-3-8b-instruct",
-			contextWindow: 10,
-			callsystem: process.env.MODEL_LLM_CALLSYSTEM || "legacy",
-		},
-	) {
-		this.message = message;
-		this.kv = kv;
-		this.workersAI = new WorkersAI({ accountId, token, model });
-		this.openai = createOpenAI({
-			apiKey: openaiToken,
-		});
-		this.model = model;
-		this.callsystem = callsystem;
-
-		this.integrations = {
-			imagine: new ImagineIntegration({ workersAI: this.workersAI }),
-			quoteoftheday: new QoTDIntegration(),
-		};
-	}
-
-	get integrationSchemas() {
-		return Object.keys(this.integrations).reduce((acc, cv) => {
-			return {
-				...acc,
-				[cv]: this.integrations[cv].tool,
-			};
-		}, {});
-	}
-
-	async integrationCaller({ history }) {
-		if (this.callsystem === "legacy") return [];
-		const model = this.openai.chat("gpt-3.5-turbo", {
-			user: this.message?.author?.id,
-		});
-
-		const call = await generateText({
-			model,
-			system:
-				"You are a bot that can call functions. If no functions are required, respond with []. The previous user messages are only for context, you have already answered them.",
-			messages: history,
-			tools: this.integrationSchemas,
-		})
-			.then((r) => r.toolCalls)
-			.catch(() => []);
-
-		return call;
-	}
-
-	async execute({ calls, ctx }) {
-		if (calls.length === 0 || this.callsystem === "legacy") return [];
-		// for each integration, call the integration
-		return Promise.all(
-			calls.map(async (call) => {
-				const integration = this.integrations[call.toolName];
-				if (typeof integration?.call !== "function") return;
-				return await integration.call(call.args, ctx);
-			}),
-		);
-	}
-}
-
 export class InteractionMessageEvent {
-	constructor({ message, interactionResponse, interactionHistory, interactionIntegrations, callsystem, model }) {
+	constructor({ message, interactionResponse, interactionHistory, model }) {
 		this.message = message;
 		this.client = message?.client;
 		this.author = message?.author;
 		this.response = interactionResponse;
 		this.history = interactionHistory;
-		this.integrations = interactionIntegrations;
-		this.callsystem = callsystem;
 		this.model = model;
 	}
 
@@ -360,7 +261,7 @@ export class InteractionMessageEvent {
 	}
 
 	async validateHistory() {
-		const initialHistory = (await this.history.get({ key: this.message?.channel?.id }, true)).filter(
+		const initialHistory = (await this.history.get({ key: this.message?.channel?.id })).filter(
 			(e) => e.role === "assistant",
 		);
 
@@ -420,8 +321,47 @@ export class InteractionMessageEvent {
 		};
 	}
 
-	async handleLegacyImageModelCall({ genData, textResponse, responseMsg, events }) {
-		const final = this.response.formatLegacyOutput(
+	async handleTextModelCall({ history }) {
+		await this.message?.channel?.sendTyping();
+		const modelCall = await this.response.workersAI
+			.callModel({
+				input: {
+					messages: history.map((e) => ({
+						role: e.role,
+						content: e.content,
+					})),
+				},
+				maxTokens: 512,
+			})
+			.catch(() => ({
+				result: { response: "" },
+			}));
+
+		const callResponse = modelCall?.result?.response?.trim();
+		const textResponse = callResponse?.split("!gen")?.[0];
+		const genData = callResponse?.split("!gen")?.[1]?.replace("[", "").replace("]", "");
+
+		await this.history
+			.add(
+				{
+					key: this.message?.channel?.id,
+					role: "assistant",
+					content: this.response.formatAssistantMessage(textResponse?.length === 0 ? "[no response]" : textResponse),
+					respondingTo: this.message?.id,
+				},
+				true,
+			)
+			.catch(console.error);
+
+		return {
+			textResponse,
+			genData,
+			callResponse,
+		};
+	}
+
+	async handleImageModelCall({ genData, textResponse, responseMsg, events }) {
+		const final = this.response.formatOutputMessage(
 			textResponse,
 			events.filter((e) => e.type !== "imagine"),
 		);
@@ -468,7 +408,7 @@ export class InteractionMessageEvent {
 			.catch(() => null);
 	}
 
-	async createLegacyResponse(
+	async createResponse(
 		{ textResponse, conditions } = {
 			conditions: {
 				amnesia: false,
@@ -486,7 +426,7 @@ export class InteractionMessageEvent {
 				};
 			});
 
-		const text = this.response.formatLegacyOutput(textResponse, events);
+		const text = this.response.formatOutputMessage(textResponse, events);
 		const content = textResponse.length >= 2000 ? "" : text;
 		const files = textResponse.length >= 2000 ? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }] : [];
 
@@ -501,85 +441,6 @@ export class InteractionMessageEvent {
 		return {
 			responseMsg,
 			events,
-		};
-	}
-
-	async preSend({ history }) {
-		const callContext = await this.history.get({ key: this.message?.channel?.id }, true).catch(() => []);
-		const calls = await this.integrations
-			.integrationCaller({
-				history: callContext
-					.map((e) => ({
-						role: e.role,
-						content: e.content,
-					}))
-					.filter((e) => e.role === "user")
-					.slice(-2),
-			})
-			.then((r) =>
-				r.map((c) => ({
-					...c,
-					stage: this.integrations.integrations?.[c.toolName]?.stage,
-					execute: async () => {
-						return await this.integrations.integrationSchemas?.[c.toolName]?.call(c.args);
-					},
-				})),
-			);
-		const preRunners = calls.filter((c) => c.stage === "pre");
-		const postRunners = calls.filter((c) => c.stage === "post");
-		const preRunnerResults = await this.integrations.execute({ calls: preRunners }).catch(() => []);
-		const allMessages = [...history.slice(0, -1), ...preRunnerResults, ...history.slice(-1)];
-
-		await this.message?.channel?.sendTyping();
-		const modelCall = await this.response.workersAI
-			.callModel({
-				input: {
-					messages: allMessages.map((e) => ({
-						role: e.role,
-						content: e.content,
-					})),
-				},
-				maxTokens: 512,
-			})
-			.catch(() => ({
-				result: { response: "" },
-			}));
-
-		const response = modelCall?.result?.response?.trim();
-
-		await this.history
-			.add(
-				{
-					key: this.message?.channel?.id,
-					role: "assistant",
-					content: this.response.formatAssistantMessage(response?.length === 0 ? "[no response]" : response),
-					respondingTo: this.message?.id,
-					context: {
-						integrations: calls.map((c) => ({ id: c.toolName, stage: c.stage, args: c.args })),
-					},
-				},
-				true,
-			)
-			.catch(console.error);
-
-		return {
-			legacy: {
-				active: this.callsystem === "legacy",
-				textResponse: response,
-				genData: response?.split("!gen")?.[0],
-				callResponse: response?.split("!gen")?.[1]?.replace("[", "").replace("]", ""),
-			},
-			runners: postRunners,
-			response,
-		};
-	}
-
-	async postSend({ runners, message }) {
-		await this?.message?.react;
-		const runnerResults = await this.integrations.execute({ calls: runners, ctx: { message } }).catch(() => []);
-
-		return {
-			results: runnerResults.filter((r) => r !== null),
 		};
 	}
 }
