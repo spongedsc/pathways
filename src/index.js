@@ -12,7 +12,10 @@ import "temporal-polyfill/global";
 
 (() => {
 	console.log(`${chalk.bold.green("Core")} running with environment context: ${chalk.bold(process.env.NODE_ENV)}`);
-	console.log(`${chalk.bold.magenta("AI")} running with LLM preset: ${chalk.bold(process.env.MODEL_LLM_PRESET)}`);
+	if (process.env.MODEL_LLM_CALLSYSTEM !== "integrations")
+		console.log(
+			`${chalk.bold.magenta("AI")} ${chalk.yellow("Warning")} The legacy call system is enabled. Integration calls are not available in this mode.`,
+		);
 })();
 
 // Initialize the client
