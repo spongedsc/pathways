@@ -103,4 +103,11 @@ dist
 # TernJS port file
 .tern-port
 
+# temporary directories
 temp
+
+# package lockfiles
+## we only use bun, so no need for yarn or npm
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
