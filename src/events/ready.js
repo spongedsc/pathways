@@ -1,6 +1,7 @@
 import { Events } from "discord.js";
 import { Environment } from "../util/helpers.js";
 import { createClient } from "redis";
+import { instructionSets } from "../util/models/constants.js";
 import chalk from "chalk";
 
 const env = new Environment();
@@ -42,7 +43,9 @@ export default {
 		client.tempStore.set("instructionSet", instructionSet);
 
 		console.log(`${chalk.bold.green("AI")} Silent mode is ${chalk.bold(silentSaved ? "enabled" : "disabled")}`);
-		console.log(`${chalk.bold.green("AI")} Instruction set is ${chalk.bold(instructionSet)}`);
+		console.log(
+			`${chalk.bold.green("AI")} Instruction set is ${chalk.bold(instructionSets[instructionSet]?.name || instructionSet)}`,
+		);
 
 		console.log(
 			`${chalk.bold.green("Core")} acting as ${chalk.bold(client.user.tag)} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
