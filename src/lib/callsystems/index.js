@@ -24,7 +24,8 @@ export const VALID_CAPABILITIES = ["text", "vision", "image", "ears", "audio", "
 /**
  * The Callsystem standard library provides a set of standardised helper functions and accessors for the callsystem to interact with elements outside of the callsystem's scope/domain.
  *
- * CallsystemStd is not a required
+ * CallsystemStd does not have to be used. However, unless if you have an absolute need to build on top of a separate layer, we recommend using CallsystemStd.
+ * If you aren't building on top of CallsystemStd, we highly recommend returning responses and building systems that are compatible with it.
  */
 export class CallsystemStd {
 	constructor({ env, callsystemName, packageId, kv, instructionSet, modelInteractionsOptions, managerOptions }) {
@@ -164,7 +165,7 @@ export class Callsystem {
 	/**
 	 * This should return the package ID of the callsystem. Callsystem package IDs are used to identify the callsystem internally.
 	 *
-	 * The package ID can be any string, but we recommend using a namespaced format (e.g. "cs.example.mycallsystem").
+	 * This package ID should be in a namespaced format. All callsystems have a root namespace of "cs".
 	 * @returns {string} The package ID of the callsystem.
 	 * @example
 	 * class Legacy extends Callsystem {
