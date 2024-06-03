@@ -44,7 +44,7 @@ export default class Legacy extends Callsystem {
 
 		const history = await modelInteractions.history
 			.add({
-				key: message?.channel?.id,
+				key: "unified-" + message?.channel?.id,
 				role: "user",
 				content:
 					formattedMessage +

@@ -344,7 +344,7 @@ export class InteractionMessageEvent {
 		await this.history
 			.add(
 				{
-					key: this.message?.channel?.id,
+					key: "unified-" + this.message?.channel?.id,
 					role: "assistant",
 					content: this.response.formatAssistantMessage(textResponse?.length === 0 ? "[no response]" : textResponse),
 					respondingTo: this.message?.id,
@@ -371,7 +371,7 @@ export class InteractionMessageEvent {
 		await this.history
 			.add(
 				{
-					key: this.message?.channel?.id,
+					key: "unified-" + this.message?.channel?.id,
 					role: "assistant",
 					content: this.response.formatAssistantMessage(`\n${genData.trim()}`, "imagine"),
 					contextId: this.message?.id,
