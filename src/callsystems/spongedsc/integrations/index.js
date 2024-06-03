@@ -176,7 +176,7 @@ export default class Integrations extends Callsystem {
 			placeholderText.length === 0 ? "Hold on, give me a minute to get the data that you need." : placeholderText;
 		const response = await message
 			.reply({
-				content: placeholderText.length > 2000 ? placeholderText.slice(0, 2000) : trimmedText,
+				...this.std.responseTransform({ content: trimmedText }),
 				components: [componentsList],
 			})
 			.catch((e) => {
@@ -233,11 +233,11 @@ export default class Integrations extends Callsystem {
 			.then((r) => r.text);
 
 		await response.edit({
-			content: textResponse,
+			...this.std.responseTransform({ content: textResponse }),
 			components: [componentsList],
 		});
 
-		const f = await hisMan.addMany(
+		await hisMan.addMany(
 			message.channel.id,
 			[
 				{
