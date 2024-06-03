@@ -389,7 +389,18 @@ export class InteractionMessageEvent {
 
 		if (imageGen === null) return await responseMsg.edit({ content: textResponse }).catch(() => null);
 
-		return responseMsg
+		responseMsg
+			.reply({
+				files: [
+					{
+						attachment: imageGen,
+						name: "generated0.jpg",
+					},
+				],
+			})
+			.catch(() => {});
+
+		return await responseMsg
 			.edit({
 				content: final?.trim()?.length >= 2000 ? "" : final,
 				files: [
@@ -399,13 +410,12 @@ export class InteractionMessageEvent {
 								name: "response.md",
 							}
 						: null,
-					{
-						attachment: imageGen,
-						name: "generated0.jpg",
-					},
 				].filter((e) => e !== null),
 			})
-			.catch(() => null);
+			.catch((e) => {
+				console.error(e);
+				return e;
+			});
 	}
 
 	async createResponse(
