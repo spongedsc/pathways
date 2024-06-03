@@ -147,19 +147,21 @@ export default class Integrations extends Callsystem {
 
 		const componentsList = new ActionRowBuilder().addComponents(
 			new ButtonBuilder()
-				.setCustomId("showing")
-				.setLabel("Integrations:")
-				.setStyle(ButtonStyle.Primary)
+				.setCustomId("using")
+				.setLabel(
+					`Using "${integrationsRequested?.[0]?.toolName?.charAt(0).toUpperCase() + integrationsRequested?.[0]?.toolName?.slice(1)}"`,
+				)
+				.setStyle(ButtonStyle.Secondary)
 				.setDisabled(true),
-			...integrationsRequested
-				.slice(0, 3)
-				.map((i) =>
-					new ButtonBuilder()
-						.setCustomId(i.toolCallId)
-						.setLabel(i.toolName)
-						.setStyle(ButtonStyle.Secondary)
-						.setDisabled(true),
-				),
+			...[
+				integrationsRequested?.length > 1
+					? new ButtonBuilder()
+							.setCustomId("plusMore")
+							.setLabel(`(and ${integrationsRequested.length - 1} others)`)
+							.setStyle(ButtonStyle.Secondary)
+							.setDisabled(true)
+					: null,
+			].filter((r) => r !== null),
 		);
 
 		if (integrationsRequested.length > 3) {
@@ -180,7 +182,7 @@ export default class Integrations extends Callsystem {
 				components: [componentsList],
 			})
 			.catch((e) => {
-				this.std.log({ level: "error", message: e });
+				this.std.log({ level: "error", message: "Error sending response" });
 				console.error(e);
 				return null;
 			});
