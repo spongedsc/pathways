@@ -25,7 +25,7 @@
     "ai": "^3.1.22",
     "chalk": "4",
     "dedent": "^1.5.3",
-    "discord.js": "^14.15.2",
+    "discord.js": "^14.15.3",
     "dotenv": "^16.3.1",
     "luxon": "^3.4.4",
     "module-alias": "^2.2.3",
