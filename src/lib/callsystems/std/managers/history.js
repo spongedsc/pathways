@@ -99,6 +99,31 @@ export class HistoryManager {
 		return loadedTemplate.includes("{RESPONSE}") ? loadedTemplate.replaceAll("{RESPONSE}", content) : loadedTemplate;
 	}
 
+	sortWithSequence(a, b) {
+		const aTimestamp = new Date(a.context.timestamp);
+		const bTimestamp = new Date(b.context.timestamp);
+
+		// CHRONOLOGICAL:
+
+		// If dateA comes before dateB, it is more recent
+		if (aTimestamp < bTimestamp) return -1;
+		// If dateA comes after dateB, it is older
+		if (aTimestamp > bTimestamp) return 1;
+
+		// BY SEQUENCE:
+
+		// If dateA is equal to dateB, see if a sequenceId is present and is equal to each other
+		if (a.sequenceId === b.sequenceId) {
+			// If contextSequence is higher, it is more recent
+			if (a.context.sequence > b.context.sequence) return 1;
+			// If contextSequence is lower, it is older
+			if (a.context.sequence < b.context.sequence) return -1;
+		} else {
+			// Else, they're equal
+			return 0;
+		}
+	}
+
 	/**
 	 * Fetch the last [contextWindow] records (messages) from the history for a given key. The default window is 5, but `contextWindow` is changeable in the callsystem's manager options.
 	 * @param {*} key The key to fetch records from
@@ -109,15 +134,9 @@ export class HistoryManager {
 		const request = (await this.kv.lRange(this.prefixKey(key), -(this.options.contextWindow + 2), -1))
 			.map((m) => JSON.parse(m))
 			// sort by timestamp; if the timestamps are the same, sort by sequence
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return b.context?.sequence - a.context?.sequence;
-				return new Date(a.timestamp) - new Date(b.timestamp);
-			})
+			.sort(this.sortWithSequence)
 			.slice(0, this.options.contextWindow)
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return a.context?.sequence - b.context?.sequence;
-				return new Date(b.timestamp) - new Date(a.timestamp);
-			});
+			.sort(this.sortWithSequence);
 
 		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
@@ -131,10 +150,7 @@ export class HistoryManager {
 		const request = (await this.kv.lRange(this.prefixKey(key), 0, -1))
 			.map((m) => JSON.parse(m))
 			.reverse()
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return a.context.sequence - b.context.sequence;
-				return new Date(b.timestamp) - new Date(a.timestamp);
-			});
+			.sort(this.sortWithSequence);
 
 		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
@@ -173,7 +189,12 @@ export class HistoryManager {
 		await runOperation();
 		return [
 			...base,
-			{ contextId, role, content: this.transformContent(content, variables), context: this.transformContext(context) },
+			{
+				contextId,
+				role,
+				content: this.transformContent(content, role, variables, template),
+				context: this.transformContext(context),
+			},
 		];
 	}
 

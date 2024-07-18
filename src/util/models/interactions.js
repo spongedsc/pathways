@@ -377,6 +377,7 @@ export class InteractionMessageEvent {
 					content: this.response.formatAssistantMessage(`\n${genData.trim()}`, "imagine"),
 					contextId: this.message?.id,
 					respondingTo: this.message?.id,
+					timestamp: Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString(),
 					model: "@cf/lykon/dreamshaper-8-lcm",
 				},
 				true,
