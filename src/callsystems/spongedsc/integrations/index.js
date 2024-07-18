@@ -1,6 +1,5 @@
 import Legacy from "../../spongedsc/legacy/index.js";
-import { Caller as IntegrationCaller } from "./models/openai.js";
-import { Caller as TextModel } from "./models/openai.js";
+import { Caller as Workers } from "./models/workers.js";
 import { Callsystem } from "../../../lib/callsystems/index.js";
 import { Temporal } from "temporal-polyfill";
 import { HistoryManager } from "../../../lib/callsystems/std/managers/history.js";
@@ -80,10 +79,18 @@ export default class Integrations extends Callsystem {
 
 		await message.channel.sendTyping();
 
-		const integrationCaller = new IntegrationCaller({ key: env.OPENAI_ACCOUNT_TOKEN });
+		// openAI
+		// const integrationCaller = new OpenAI({ key: env.OPENAI_ACCOUNT_TOKEN });
+
+		// workers
+		const integrationCaller = new Workers({
+			key: env.CLOUDFLARE_ACCOUNT_TOKEN,
+			accountId: env.CLOUDFLARE_ACCOUNT_ID,
+		});
+
 		const { text: placeholderText, toolCalls: integrationsRequested } = await integrationCaller
 			.call({
-				model: "gpt-4o",
+				model: "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: integrationCallHistory,
 				tools: integrations.map((i) => i.tool),
 			})
@@ -176,6 +183,7 @@ export default class Integrations extends Callsystem {
 
 		const trimmedText =
 			placeholderText.length === 0 ? "Hold on, give me a minute to get the data that you need." : placeholderText;
+
 		const response = await message
 			.reply({
 				...this.std.responseTransform({ content: trimmedText }),
@@ -201,31 +209,43 @@ export default class Integrations extends Callsystem {
 				return [];
 			});
 
-		const formattedResponses = integrationsResponses.map((i) => ({
-			role: "tool",
-			content: i.messages,
-		}));
+		const formattedResponses = integrationsResponses.reduce((acc, parent) => {
+			const addForHistory = parent.messages.map((i) => {
+				return {
+					role: "tool",
+					name: i?.toolName,
+					content: i?.result,
+				};
+			});
+
+			acc.push(...addForHistory);
+			return acc;
+		}, []);
 
 		const toSend = [
 			...history.map((m) => ({ role: m.role, content: m.content })),
 			{
 				role: "assistant",
-				content: [
-					{
-						type: "text",
-						text: placeholderText,
-					},
-					...integrationsRequested,
-				],
+				content: placeholderText,
+				tool_call: integrationsRequested[0]?.name,
 			},
 			...formattedResponses,
 		];
 
-		const textModel = new TextModel({ key: env.OPENAI_ACCOUNT_TOKEN });
+		console.log(toSend);
+
+		// workers
+		const textModel = new Workers({
+			key: env.CLOUDFLARE_ACCOUNT_TOKEN,
+			accountId: env.CLOUDFLARE_ACCOUNT_ID,
+		});
+
 		const textResponse = await textModel
 			.call({
-				model: "gpt-4o",
+				// model: "gpt-4o",
+				model: "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: toSend,
+				tools: integrations.map((i) => i.tool),
 			})
 			.catch((e) => {
 				this.std.log({ level: "error", message: "Error calling text model" });
@@ -243,10 +263,11 @@ export default class Integrations extends Callsystem {
 			message.channel.id,
 			[
 				{
-					contextId: message?.id,
-					role: "system",
-					content: `(Called integrations: ${integrationsResponses.map((i) => i.integration).join(", ")})`,
+					role: "assistant",
+					content: placeholderText,
+					tool_call: integrationsRequested[0]?.name,
 				},
+				...formattedResponses,
 				{
 					contextId: message?.id,
 					role: "assistant",
