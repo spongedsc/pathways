@@ -86,9 +86,9 @@ export default class HelloWorld extends Integration {
 				{
 					role: "tool",
 					content: dedent`
-                    The weather in ${pois[0]?.display_name} is currently ${weather?.current?.temperature_2m || "<unknown>"}°C and ${wmo[weather?.current?.weather_code]?.[isDay ? "day" : "night"] || "<unknown>"}.
+                    The weather in ${pois[0]?.display_name} is currently ${weather?.current?.temperature_2m || "<unknown>"}°C and ${wmo[weather?.current?.weather_code]?.[isDay ? "day" : "night"]?.description || "<unknown>"}.
                     
-                    Today, the weather is expected to be ${wmo[weather?.daily?.weather_code?.[0]]?.[isDay ? "day" : "night"] || "<unknown>"}, with a high of ${weather?.daily?.temperature_2m_max?.[0] || "<unknown>"}°C and a low of ${weather?.daily?.temperature_2m_min?.[0] || "<unknown>"}°C.
+                    Today, the weather is expected to be ${wmo[weather?.daily?.weather_code?.[0]]?.[isDay ? "day" : "night"]?.description || "<unknown>"}, with a high of ${weather?.daily?.temperature_2m_max?.[0] || "<unknown>"}°C and a low of ${weather?.daily?.temperature_2m_min?.[0] || "<unknown>"}°C.
                     `,
 				},
 			],
