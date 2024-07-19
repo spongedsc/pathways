@@ -15,6 +15,7 @@ import {
 	generateGenericModelMap,
 	openChatify,
 	toolCallsToHistory,
+	wakeUp,
 } from "./lib/helpers.js";
 import dedent from "dedent";
 
@@ -55,6 +56,12 @@ export default class Integrations extends Callsystem {
 
 	async activate() {
 		const { message, client, env } = this;
+
+		const wasSleeping = await wakeUp(client.tempStore, this.std.kv);
+		if (wasSleeping) {
+			message.content = "*You were sleeping and I woke you up.*\n\n" + message.content;
+			message.wasSleeping = true;
+		}
 
 		const callerCtx = generateCallerMap(env);
 		const gmCtx = generateGenericModelMap(env);
@@ -98,14 +105,35 @@ export default class Integrations extends Callsystem {
 			.call({
 				model: callerCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: integrationCallHistory,
-				tools: integrations.map((i) => i.tool),
+				tools: integrations.map((i) => i.tool).filter((t) => !(wasSleeping && t.function.name === "sleep")),
 			})
 			.catch(async (e) => {
 				this.std.log({ level: "error", message: "Error calling integrations" });
-				console.error(e);
 				await message.react("⚠️").catch(() => {});
-				return [];
+				return [
+					{
+						error: true,
+						content: e,
+					},
+				];
 			});
+
+		if (integrationsRequested.find((r) => r.error)) {
+			const error = integrationsRequested.find((r) => r.error);
+			console.error(error.content);
+
+			if (error?.content?.message?.includes("requires moderation")) {
+				await message.react("🛡️").catch(() => {});
+			} else {
+				await message.react("⚠️").catch(() => {});
+			}
+
+			message.moderated = true;
+			message.content =
+				"CONTEXT: This message is moderated. It may be best to mention this to the user.\n\n" + message.content;
+			const callsystemInstance = new Legacy({ env, message, client });
+			return await callsystemInstance.activate();
+		}
 
 		const integrationsResponses = await Promise.all(
 			integrationsRequested.map(async (i) => {
@@ -148,23 +176,6 @@ export default class Integrations extends Callsystem {
 		if (integrationsResponses.length === 0) {
 			const callsystemInstance = new Legacy({ env, message, client });
 			return await callsystemInstance.activate();
-		}
-
-		if (callerCtx.get("callerProvider") === "WORKERS" && gmCtx.get("callerProvider") !== "WORKERS") {
-			await message.reply(dedent`
-            Hi there! You're currently using a caller provider that is currently unsupported by the text model (GM, generic model) that you have configured in your environment.
-            
-            Here's some more information on how your current setup is configured:
-            
-            - 📞 **Caller Provider**: \`WORKERS\` ✅
-            - 🧠 **GM/Text Model Provider**: \`${gmCtx.get("callerProvider")}\` ❌
-            
-            Cloudflare Workers AI, your configured caller provider, has output that is incompatible with OpenAI-compatible inferencing providers.
-            
-            As the caller detected a relevant function to call and wasn't going to pass control onto Legacy, we've had to halt the callsystem activation process to prevent a catastrophic failure. 
-            -# Sent by **Integrations**`);
-
-			return;
 		}
 
 		const trimmedText =
