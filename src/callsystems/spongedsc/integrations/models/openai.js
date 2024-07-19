@@ -25,75 +25,124 @@ class OpenAI {
 		tools = [],
 		tool_choice,
 	}) {
-		const toCall = tools.map((tool) => {
-			try {
-				const toolSchema = zodToJsonSchema(tool.function.parameters);
+		try {
+			const toCall = tools.map((tool) => {
+				try {
+					const toolSchema = zodToJsonSchema(tool.function.parameters);
 
-				return {
-					type: "function",
-					function: {
+					return {
+						type: "function",
+						function: {
+							...(tool?.function || {}),
+							parameters: toolSchema || {},
+						},
+					};
+				} catch (e) {
+					console.log(e);
+					return {
 						...(tool?.function || {}),
-						parameters: toolSchema || {},
-					},
-				};
-			} catch (e) {
-				console.log(e);
-				return {
-					...(tool?.function || {}),
-				};
-			}
-		});
-
-		const adjoined = {
-			model: model || "gpt-4o",
-			messages: messages.map((m) => ({
-				role: m.role,
-				tool_call_id: m.tool_call_id,
-				content: m.content,
-				tool_calls: m.tool_calls,
-			})),
-			temperature,
-			top_p,
-			frequency_penalty,
-			presence_penalty,
-			max_tokens,
-			stop,
-			tools: toCall,
-			tool_choice,
-		};
-
-		const response = await fetch(`${this.apiUrl}/chat/completions`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${this.key}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(adjoined),
-		})
-			.then((res) => res.json())
-			.catch((err) => {
-				console.error(err);
-				return {};
+					};
+				}
 			});
 
-		const toolCallMessage = response.choices.find((c) => c.finish_reason === "tool_calls") || {};
-		const actualResponse = response.choices.find((c) => c.finish_reason === "stop") || {};
+			// reduce processedMessages to remove duplicate tool_call_id's
+			const processedMessages = messages.reduce((acc, m) => {
+				if (!m.tool_call_id) return [...acc, m];
 
-		const toolCalls = toolCallMessage.message?.tool_calls?.map((t) => {
-			return {
-				type: "tool",
-				id: t?.id,
-				toolName: t?.function?.name,
-				args: t?.function?.arguments,
-				function: t?.function,
+				// check if message already exists
+				const existing = acc.find((a) => a.tool_call_id === m.tool_call_id);
+				if (existing) {
+					console.log("Duplicate tool_call_id found, removing");
+					console.log(m, existing);
+					return acc;
+				}
+
+				// get index of message
+				const index = [...acc, m].findIndex((a) => a === m);
+
+				// get the message before the existing message
+				const before = acc[index - 1];
+
+				// if the message before the existing doesn't have "tool_calls", don't add the message
+				if (!before?.tool_calls) return acc;
+
+				return [...acc, m];
+			}, []);
+
+			const adjoined = {
+				model: model || "gpt-4o",
+				messages: processedMessages
+					.map((m) => ({
+						role: m.role,
+						tool_call_id: m.tool_call_id,
+						content: m.content,
+						tool_calls: m.tool_calls,
+					}))
+					.filter((m) => !(m.role === "tool" && !m.tool_call_id)),
+				temperature,
+				top_p,
+				frequency_penalty,
+				presence_penalty,
+				max_tokens,
+				stop,
+				tools: toCall,
+				tool_choice,
 			};
-		});
 
-		return {
-			success: response.success || false,
-			text: actualResponse?.message?.content || "",
-			toolCalls: toolCalls || [],
-		};
+			const response = await fetch(`${this.apiUrl}/chat/completions`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${this.key}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(adjoined),
+			})
+				.then((res) => res.json())
+				.catch((err) => {
+					console.error(err);
+					return {};
+				});
+
+			if (response.error) throw response;
+
+			if (!response.choices) {
+				throw new Error("Error calling OpenAI-compatible inference provider");
+			}
+
+			const toolCallMessage = response.choices.find((c) => c.finish_reason === "tool_calls") || {};
+			const actualResponse = response.choices.find((c) => c.finish_reason === "stop") || {};
+
+			const toolCalls = toolCallMessage.message?.tool_calls?.map((t) => {
+				return {
+					type: "tool",
+					id: t?.id,
+					toolName: t?.function?.name,
+					args: t?.function?.arguments,
+					function: t?.function,
+				};
+			});
+
+			return {
+				success: response.success || false,
+				text: actualResponse?.message?.content || "",
+				toolCalls: toolCalls || [],
+			};
+		} catch (e) {
+			const moderated = e?.error?.message?.includes("requires moderation");
+			if (!moderated) console.error(e);
+			return {
+				success: false,
+				text: "-# There was an error when attempting to call the inference provider. Please try again later.",
+				toolCalls: moderated
+					? [
+							{
+								error: true,
+								content: e?.error,
+							},
+						]
+					: [],
+			};
+		}
 	}
 }
 
