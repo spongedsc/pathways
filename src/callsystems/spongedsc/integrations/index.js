@@ -124,13 +124,14 @@ export default class Integrations extends Callsystem {
 
 			if (error?.content?.message?.includes("requires moderation")) {
 				await message.react("🛡️").catch(() => {});
+				message.moderated = true;
+				message.moderationTags = error?.content?.metadata?.reasons;
+				message.content =
+					"CONTEXT: This message is moderated. It may be best to mention this to the user.\n\n" + message.content;
 			} else {
 				await message.react("⚠️").catch(() => {});
 			}
 
-			message.moderated = true;
-			message.content =
-				"CONTEXT: This message is moderated. It may be best to mention this to the user.\n\n" + message.content;
 			const callsystemInstance = new Legacy({ env, message, client });
 			return await callsystemInstance.activate();
 		}
@@ -234,12 +235,11 @@ export default class Integrations extends Callsystem {
 
 		// workers
 		const textModel = new GMProvider(generateCredentials(gmCtx));
-
 		const textResponse = await textModel
 			.call({
 				model: gmCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: toSend,
-				tools: integrations.map((i) => i.tool),
+				tools: integrations.map((i) => i.tool).filter(() => gmCtx.get("callerModel").includes("openai")),
 				tool_choice: "none",
 			})
 			.catch((e) => {

@@ -1,6 +1,7 @@
 import { fetch } from "undici";
 import { events, instructionSets } from "./constants.js";
 import { WorkersAI } from "./index.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 
 export class InteractionHistory {
 	constructor(
@@ -434,12 +435,28 @@ export class InteractionMessageEvent {
 			});
 
 		let textResponse = tr;
+		let components = [];
 
-		if (this.message?.moderated === true)
+		if (this.message?.moderated === true) {
 			textResponse =
 				tr +
 				"\n-# Your message was moderated as it contained content that did not follow the inference provider's guidelines.";
-		else {
+
+			if (
+				this?.message?.moderationTags?.includes("self-harm") ||
+				this?.message?.moderationTags?.includes("self-harm/intent")
+			) {
+				components.push(
+					new ActionRowBuilder().addComponents(
+						new ButtonBuilder()
+							.setStyle(ButtonStyle.Link)
+							.setURL("https://afsp.org/suicide-prevention-resources/")
+							.setLabel("S/H prevention resources")
+							.setDisabled(false),
+					),
+				);
+			}
+		} else {
 			if (this.message?.wasSleeping === true) textResponse = tr + "\n-# I was sleeping!! Ugh..";
 
 			textResponse = textResponse.trim();
@@ -453,6 +470,7 @@ export class InteractionMessageEvent {
 			?.reply({
 				content,
 				files,
+				components: components || [],
 				failIfNotExists: true,
 			})
 			.catch(() => this.message.react("❌").catch(() => false));
