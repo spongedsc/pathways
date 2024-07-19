@@ -106,7 +106,7 @@ export class CallsystemStd {
 		const returnContent = content?.length >= 2000 ? "" : content;
 		const returnFiles =
 			content?.length >= 2000
-				? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }, ...files]
+				? [{ attachment: Buffer.from(content, "utf-8"), name: "response.md" }, ...files]
 				: [...files];
 
 		return {
