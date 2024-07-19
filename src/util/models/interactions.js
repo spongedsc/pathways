@@ -416,7 +416,7 @@ export class InteractionMessageEvent {
 	}
 
 	async createResponse(
-		{ textResponse, conditions } = {
+		{ textResponse: tr, conditions } = {
 			conditions: {
 				amnesia: false,
 				imagine: false,
@@ -432,6 +432,18 @@ export class InteractionMessageEvent {
 					status: "default",
 				};
 			});
+
+		let textResponse = tr;
+
+		if (this.message?.moderated === true)
+			textResponse =
+				tr +
+				"\n-# Your message was moderated as it contained content that did not follow the inference provider's guidelines.";
+		else {
+			if (this.message?.wasSleeping === true) textResponse = tr + "\n-# I was sleeping!! Ugh..";
+
+			textResponse = textResponse.trim();
+		}
 
 		const text = this.response.formatOutputMessage(textResponse, events);
 		const content = textResponse?.length >= 2000 ? "" : text;
