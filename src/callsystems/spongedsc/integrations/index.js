@@ -1,11 +1,22 @@
 import Legacy from "../../spongedsc/legacy/index.js";
 import { Caller as Workers } from "./models/workers.js";
+import { Caller as OpenAICompatible } from "./models/openai.js";
 import { Callsystem } from "../../../lib/callsystems/index.js";
 import { Temporal } from "temporal-polyfill";
 import { HistoryManager } from "../../../lib/callsystems/std/managers/history.js";
-import { personas } from "../../../util/models/constants.js";
-import { ActionRowBuilder, ButtonBuilder } from "@discordjs/builders";
-import { ButtonStyle } from "discord.js";
+import {
+	adaptHistory,
+	determineCaller,
+	determineGM,
+	fetchIntegrations,
+	generateCredentials,
+	generateCallerMap,
+	generateComponentsList,
+	generateGenericModelMap,
+	openChatify,
+	toolCallsToHistory,
+} from "./lib/helpers.js";
+import dedent from "dedent";
 
 export default class Integrations extends Callsystem {
 	constructor(opts) {
@@ -44,12 +55,16 @@ export default class Integrations extends Callsystem {
 
 	async activate() {
 		const { message, client, env } = this;
+
+		const callerCtx = generateCallerMap(env);
+		const gmCtx = generateGenericModelMap(env);
+
 		const hisMan = new HistoryManager({
 			kv: this.std.kv,
 			instructionSet: client?.tempStore.get("instructionSet") || env?.MODEL_LLM_PRESET || "default",
 			baseHistory: [],
-			model: "@openai/gpt-4/o",
-			contextWindow: 5,
+			model: callerCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
+			contextWindow: 10,
 			recordTemplate:
 				this.constructor.managerOptions.recordTemplate || "%USER% (%PRONOUNS%) at %TIMESTAMP%: %RESPONSE%",
 			variables: {
@@ -61,36 +76,27 @@ export default class Integrations extends Callsystem {
 			keyPrefix: "unified",
 		});
 
-		const integrations = Array.from(client.integrationsMap.keys())
-			.filter((i) => {
-				return i.startsWith("in.") && i.endsWith("-latest");
-			})
-			.map((i) => client.integrationsMap.get(i));
+		const CallerProvider = determineCaller(callerCtx.get("callerProvider"));
+		const GMProvider = determineGM(gmCtx.get("callerProvider"));
 
-		const integrationCallHistory = [
-			...personas.integrationCaller.messages,
-			...(await hisMan.get(message.channel.id, false)),
-			{
-				contextId: message.id,
-				role: "user",
-				content: message.content,
+		const integrations = fetchIntegrations(client.integrationsMap);
+		const integrationCallHistory = await adaptHistory(await hisMan.get(message.channel.id, false), {
+			contextId: message.id,
+			role: "user",
+			content: hisMan.transformContent(message.content, "user", hisMan.options.variables),
+			context: {
+				respondingTo: message.id,
+				timestamp: Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString(),
 			},
-		];
+		});
 
 		await message.channel.sendTyping();
 
-		// openAI
-		// const integrationCaller = new OpenAI({ key: env.OPENAI_ACCOUNT_TOKEN });
-
-		// workers
-		const integrationCaller = new Workers({
-			key: env.CLOUDFLARE_ACCOUNT_TOKEN,
-			accountId: env.CLOUDFLARE_ACCOUNT_ID,
-		});
+		const integrationCaller = new CallerProvider(generateCredentials(callerCtx));
 
 		const { text: placeholderText, toolCalls: integrationsRequested } = await integrationCaller
 			.call({
-				model: "@hf/nousresearch/hermes-2-pro-mistral-7b",
+				model: callerCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: integrationCallHistory,
 				tools: integrations.map((i) => i.tool),
 			})
@@ -107,12 +113,12 @@ export default class Integrations extends Callsystem {
 				const integration = new integrationClass({ env, message, client, std: this.std, provider: this.provider });
 				return await integration
 					.activate({
-						arguments: i.args,
+						arguments: typeof i.args === "string" ? JSON.parse(i.args) : i.args,
 					})
 					.then((r) => ({
 						...r,
 						messages: r.messages.map((m) => ({
-							type: "tool-result",
+							type: "tool",
 							toolCallId: i.toolCallId,
 							toolName: i.toolName,
 							result: m.content,
@@ -125,20 +131,12 @@ export default class Integrations extends Callsystem {
 						console.error(e);
 						return {
 							success: false,
-							messages: [
-								{
-									role: "tool",
-									content: [
-										{
-											type: "tool-result",
-											toolCallId: i.toolCallId,
-											toolName: i.toolName,
-											result: `Error activating integration: Catastrophic failure`,
-											isError: true,
-										},
-									],
-								},
-							],
+							messages: dummyToolResult({
+								id: i.toolCallId,
+								name: i.toolName,
+								isError: true,
+								result: "Catastrophic failure",
+							}),
 							data: {
 								message: "Catastrophic failure to activate integration",
 							},
@@ -152,42 +150,31 @@ export default class Integrations extends Callsystem {
 			return await callsystemInstance.activate();
 		}
 
-		const componentsList = new ActionRowBuilder().addComponents(
-			new ButtonBuilder()
-				.setCustomId("using")
-				.setLabel(
-					`Using "${integrationsRequested?.[0]?.toolName?.charAt(0).toUpperCase() + integrationsRequested?.[0]?.toolName?.slice(1)}"`,
-				)
-				.setStyle(ButtonStyle.Secondary)
-				.setDisabled(true),
-			...[
-				integrationsRequested?.length > 1
-					? new ButtonBuilder()
-							.setCustomId("plusMore")
-							.setLabel(`(and ${integrationsRequested.length - 1} others)`)
-							.setStyle(ButtonStyle.Secondary)
-							.setDisabled(true)
-					: null,
-			].filter((r) => r !== null),
-		);
+		if (callerCtx.get("callerProvider") === "WORKERS" && gmCtx.get("callerProvider") !== "WORKERS") {
+			await message.reply(dedent`
+            Hi there! You're currently using a caller provider that is currently unsupported by the text model (GM, generic model) that you have configured in your environment.
+            
+            Here's some more information on how your current setup is configured:
+            
+            - 📞 **Caller Provider**: \`WORKERS\` ✅
+            - 🧠 **GM/Text Model Provider**: \`${gmCtx.get("callerProvider")}\` ❌
+            
+            Cloudflare Workers AI, your configured caller provider, has output that is incompatible with OpenAI-compatible inferencing providers.
+            
+            As the caller detected a relevant function to call and wasn't going to pass control onto Legacy, we've had to halt the callsystem activation process to prevent a catastrophic failure. 
+            -# Sent by **Integrations**`);
 
-		if (integrationsRequested.length > 3) {
-			componentsList.addComponents(
-				new ButtonBuilder()
-					.setCustomId("plusMore")
-					.setLabel(`+ ${integrationsRequested.length - 3} more`)
-					.setStyle(ButtonStyle.Primary)
-					.setDisabled(true),
-			);
+			return;
 		}
 
 		const trimmedText =
-			placeholderText.length === 0 ? "Hold on, give me a minute to get the data that you need." : placeholderText;
+			(placeholderText + "\n" || "") +
+			`-# Using **${integrationsRequested?.length || 0}** integration${integrationsRequested?.length === 1 ? "" : "s"}`;
 
 		const response = await message
 			.reply({
 				...this.std.responseTransform({ content: trimmedText }),
-				components: [componentsList],
+				components: [generateComponentsList({ integrationsRequested, type: "active" })],
 			})
 			.catch((e) => {
 				this.std.log({ level: "error", message: "Error sending response" });
@@ -209,73 +196,74 @@ export default class Integrations extends Callsystem {
 				return [];
 			});
 
-		const formattedResponses = integrationsResponses.reduce((acc, parent) => {
-			const addForHistory = parent.messages.map((i) => {
-				return {
-					role: "tool",
-					name: i?.toolName,
-					content: i?.result,
-				};
-			});
-
-			acc.push(...addForHistory);
-			return acc;
-		}, []);
-
+		const formattedResponses = openChatify(integrationsRequested, integrationsResponses);
 		const toSend = [
-			...history.map((m) => ({ role: m.role, content: m.content })),
+			...history.map((m) => {
+				const toSend = {
+					role: m.role,
+					content: m.content,
+					tool_calls: m.tool_calls,
+					tool_call_id: m.tool_call_id,
+				};
+
+				if (m?.role === "tool" && !m?.tool_call_id) toSend.tool_call_id = nanoid();
+				return toSend;
+			}),
 			{
 				role: "assistant",
 				content: placeholderText,
-				tool_call: integrationsRequested[0]?.name,
+				tool_calls: integrationsRequested.map((i) => ({
+					id: i?.id,
+					type: "function",
+					function: i?.function,
+				})),
 			},
 			...formattedResponses,
 		];
 
-		console.log(toSend);
-
 		// workers
-		const textModel = new Workers({
-			key: env.CLOUDFLARE_ACCOUNT_TOKEN,
-			accountId: env.CLOUDFLARE_ACCOUNT_ID,
-		});
+		const textModel = new GMProvider(generateCredentials(gmCtx));
 
 		const textResponse = await textModel
 			.call({
-				// model: "gpt-4o",
-				model: "@hf/nousresearch/hermes-2-pro-mistral-7b",
+				model: gmCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
 				messages: toSend,
 				tools: integrations.map((i) => i.tool),
+				tool_choice: "none",
 			})
 			.catch((e) => {
 				this.std.log({ level: "error", message: "Error calling text model" });
 				console.error(e);
 				return "";
 			})
-			.then((r) => r.text);
+			.then((r) => {
+				return r.text || "[No response was returned.]";
+			});
+
+		const primaryResponse = integrationsResponses.find((r) => r.integration === integrationsRequested?.[0]?.toolName);
 
 		await response.edit({
-			...this.std.responseTransform({ content: textResponse }),
-			components: [componentsList],
+			...this.std.responseTransform({
+				content:
+					textResponse +
+					`\n-# Using **${integrationsRequested?.length || 0}** integration${integrationsRequested?.length === 1 ? "" : "s"}`,
+			}),
+			components: [
+				generateComponentsList({ integrationsRequested, type: "inactive", responses: integrationsResponses }),
+			],
+			files: primaryResponse?.data?.attachments || [],
 		});
 
 		await hisMan.addMany(
 			message.channel.id,
 			[
-				{
-					role: "assistant",
-					content: placeholderText,
-					tool_call: integrationsRequested[0]?.name,
-				},
-				...formattedResponses,
-				{
-					contextId: message?.id,
-					role: "assistant",
-					content: textResponse,
-					context: {
-						model: "@openai/gpt-4/o",
-					},
-				},
+				...toolCallsToHistory({
+					integrationsRequested,
+					formattedResponses,
+					model: callerCtx.get("callerModel") || "@hf/nousresearch/hermes-2-pro-mistral-7b",
+					message,
+					textResponse,
+				}),
 			],
 			false,
 			true,

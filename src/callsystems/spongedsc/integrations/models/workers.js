@@ -3,6 +3,7 @@ import { generateText, tool } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { nanoid } from "nanoid";
 import zodToJsonSchema from "zod-to-json-schema";
+import { fetch } from "undici";
 
 class Workers {
 	constructor({
@@ -18,6 +19,7 @@ class Workers {
 	async call({
 		model,
 		messages,
+		prompt,
 		temperature = 0,
 		top_p = 1,
 		frequency_penalty = 0,
@@ -27,16 +29,23 @@ class Workers {
 		tools = [],
 	}) {
 		const toCall = tools.map((tool) => {
-			const toolSchema = zodToJsonSchema(tool.function.parameters);
+			try {
+				const toolSchema = zodToJsonSchema(tool.function.parameters);
 
-			return {
-				...(tool?.function || {}),
-				parameters: toolSchema,
-			};
+				return {
+					...(tool?.function || {}),
+					parameters: toolSchema,
+				};
+			} catch (e) {
+				return {
+					...(tool?.function || {}),
+				};
+			}
 		});
 
 		const adjoined = {
 			messages,
+			prompt,
 			tools: toCall,
 		};
 
@@ -72,21 +81,22 @@ class Workers {
 			body: JSON.stringify(adjoined),
 		});
 
-		if (modelMetadata?.task?.name === "Text-to-Image") return request;
+		if (modelMetadata?.task?.name === "Text-to-Image") return await request.arrayBuffer();
 
 		const response = await request.json();
-
-		const toolCalls = response.result?.tool_calls?.map((t) => {
-			return {
-				toolName: t.name,
-				args: t.arguments,
-			};
-		});
+		const toolCalls = [response.result?.tool_calls]
+			.map((t) => {
+				return {
+					toolName: t?.name,
+					args: t?.arguments,
+				};
+			})
+			.filter((t) => t?.toolName && t?.args);
 
 		return {
 			success: response.success || false,
 			text: response.result?.response || "",
-			toolCalls: toolCalls || [],
+			toolCalls: toolCalls?.length > 0 ? toolCalls : [],
 		};
 	}
 }
