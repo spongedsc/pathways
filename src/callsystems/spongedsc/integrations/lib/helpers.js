@@ -57,10 +57,7 @@ export const fetchIntegrations = (m) =>
 
 export const adaptHistory = async (history, rec) => [
 	...personas.integrationCaller.messages,
-	...history
-		.filter((m) => m.role !== "tool" && m.role !== "tool")
-		.map((m) => ({ role: m.role, content: m.content }))
-		.slice(0, 3),
+	...history.filter((m) => m.role !== "tool" && m.role !== "tool").map((m) => ({ role: m.role, content: m.content })),
 	rec,
 ];
 
@@ -163,7 +160,7 @@ export const toolCallsToHistory = ({ formattedResponses, integrationsRequested, 
 		const toSend = {
 			...r,
 			role: r.role || "system",
-			content: r.content || "[No response was returned from the integration.]",
+			content: r.content.slice(0, 1000) || "[No response was returned from the integration.]",
 			tool_calls: r.tool_calls,
 			tool_call_id: r.tool_call_id,
 			context: {
@@ -191,4 +188,14 @@ export const generateCredentials = (ctx) => {
 	if (provider === "OPENAI") return { key: ctx.get("callerAccountToken") };
 	if (provider === "OPENROUTER") return { key: ctx.get("callerAccountToken"), apiUrl: `https://openrouter.ai/api/v1` };
 	if (provider === "WORKERS") return { key: ctx.get("callerAccountToken"), accountId: ctx.get("callerAccountId") };
+};
+
+export const wakeUp = async (cache, db) => {
+	if (cache.get("silentMode") === true) {
+		cache.set("silentMode", false);
+		await db.set("silentMode", "false");
+		return true;
+	} else {
+		return false;
+	}
 };
