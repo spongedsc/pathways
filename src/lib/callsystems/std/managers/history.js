@@ -10,12 +10,21 @@ export class HistoryManager {
 	 * @param {object} options
 	 *
 	 */
-	constructor({ kv, instructionSet, baseHistory = [], model, contextWindow = 5, recordTemplate, variables }) {
+	constructor({
+		kv,
+		instructionSet,
+		baseHistory = [],
+		model,
+		contextWindow = 5,
+		recordTemplate,
+		variables,
+		keyPrefix: prefix,
+	}) {
 		this.kv = kv;
 		this.options = {
 			contextWindow: contextWindow || 5,
 			instructionSet,
-			prefix: "std.history",
+			prefix: prefix || "std.history",
 			template: recordTemplate || "%RESPONSE%",
 			variables: variables || {},
 		};
@@ -56,29 +65,31 @@ export class HistoryManager {
 	 * @param {string} content
 	 * @returns {string} The transformed content
 	 */
-	transformContent(content) {
-		const template = this.options.template || "%RESPONSE%";
-
+	transformContent(content, role, variables, templateOverride) {
+		const template = templateOverride || this.options.template || "%RESPONSE%";
+		const vars = { ...(this.options.variables || {}), ...variables };
 		if (typeof content !== "string") return content;
 
-		const randomisedVars = Object.keys(this.options.variables).map((key) => {
+		if (role !== "user") return content;
+
+		const randomisedVars = Object.keys(vars).map((key) => {
 			const randomId = nanoid();
 			return {
 				id: `{_${randomId}}`,
 				trueId: key,
-				value: this.options.variables[key],
+				value: vars[key],
 			};
 		});
 
 		// replace all variable expressions with randomised ID expressions
-		const sanitisedTemplate = Object.keys(this.options.variables).reduce((acc, key) => {
+		const sanitisedTemplate = Object.keys(vars).reduce((acc, key) => {
 			const variable = randomisedVars.find((v) => v.trueId === key);
 			return acc.replaceAll(key, variable.id);
 		}, template || "%RESPONSE%");
 
 		// replace all sanitised variable sequences in the content with their values
 		// %RESPONSE% and {RESPONSE} are special variables that are replaced with the response. these are not included here for safety
-		const loadedTemplate = Object.keys(this.options.variables).reduce((acc, key) => {
+		const loadedTemplate = Object.keys(vars).reduce((acc, key) => {
 			const variable = randomisedVars.find((v) => v.trueId === key);
 			return acc.replaceAll(variable.id, variable.value);
 		}, sanitisedTemplate);
@@ -86,6 +97,31 @@ export class HistoryManager {
 		if (loadedTemplate.includes("%RESPONSE%")) return loadedTemplate.replaceAll("%RESPONSE%", content);
 
 		return loadedTemplate.includes("{RESPONSE}") ? loadedTemplate.replaceAll("{RESPONSE}", content) : loadedTemplate;
+	}
+
+	sortWithSequence(a, b) {
+		const aTimestamp = new Date(a.context.timestamp);
+		const bTimestamp = new Date(b.context.timestamp);
+
+		// CHRONOLOGICAL:
+
+		// If dateA comes before dateB, it is more recent
+		if (aTimestamp < bTimestamp) return -1;
+		// If dateA comes after dateB, it is older
+		if (aTimestamp > bTimestamp) return 1;
+
+		// BY SEQUENCE:
+
+		// If dateA is equal to dateB, see if a sequenceId is present and is equal to each other
+		if (a.sequenceId === b.sequenceId) {
+			// If contextSequence is higher, it is more recent
+			if (a.context.sequence > b.context.sequence) return 1;
+			// If contextSequence is lower, it is older
+			if (a.context.sequence < b.context.sequence) return -1;
+		} else {
+			// Else, they're equal
+			return 0;
+		}
 	}
 
 	/**
@@ -98,15 +134,9 @@ export class HistoryManager {
 		const request = (await this.kv.lRange(this.prefixKey(key), -(this.options.contextWindow + 2), -1))
 			.map((m) => JSON.parse(m))
 			// sort by timestamp; if the timestamps are the same, sort by sequence
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return b.context?.sequence - a.context?.sequence;
-				return new Date(a.timestamp) - new Date(b.timestamp);
-			})
+			.sort(this.sortWithSequence)
 			.slice(0, this.options.contextWindow)
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return a.context?.sequence - b.context?.sequence;
-				return new Date(b.timestamp) - new Date(a.timestamp);
-			});
+			.sort(this.sortWithSequence);
 
 		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
@@ -120,10 +150,7 @@ export class HistoryManager {
 		const request = (await this.kv.lRange(this.prefixKey(key), 0, -1))
 			.map((m) => JSON.parse(m))
 			.reverse()
-			.sort((a, b) => {
-				if (a.sequenceId === b.sequenceId) return a.context.sequence - b.context.sequence;
-				return new Date(b.timestamp) - new Date(a.timestamp);
-			});
+			.sort(this.sortWithSequence);
 
 		return [...(includeBase ? this.baseHistory : []), ...request];
 	}
@@ -139,14 +166,20 @@ export class HistoryManager {
 	 * @param {boolean} returnEverything Whether to return the entire history after adding the record. Will only be triggered on `returnEverything = true`.
 	 * @returns {Promise<object[]>} The history after adding the record
 	 */
-	async add(key, { contextId, role, content, context }, returnEverything = false, includeBase = true) {
+	async add(
+		key,
+		{ contextId, role, content, context },
+		returnEverything = false,
+		includeBase = true,
+		{ variables = {}, template = this.options.template || "%RESPONSE%" } = {},
+	) {
 		const runOperation = async () => {
 			return await this.kv.lPush(
 				this.prefixKey(key),
 				JSON.stringify({
 					contextId,
 					role,
-					content: this.transformContent(content),
+					content: this.transformContent(content, role, variables, template),
 					context: this.transformContext(context),
 				}),
 			);
@@ -156,15 +189,26 @@ export class HistoryManager {
 		await runOperation();
 		return [
 			...base,
-			{ contextId, role, content: this.transformContent(content), context: this.transformContext(context) },
+			{
+				contextId,
+				role,
+				content: this.transformContent(content, role, variables, template),
+				context: this.transformContext(context),
+			},
 		];
 	}
 
-	async addMany(key, messages = [], returnEverything = false, includeBase = true) {
+	async addMany(
+		key,
+		messages = [],
+		returnEverything = false,
+		includeBase = true,
+		{ variables = {}, template = this.options.template || "%RESPONSE%" } = {},
+	) {
 		const sequenceId = nanoid();
 		const mappedMsgs = messages.map((m) => ({
 			...m,
-			content: this.transformContent(m.content),
+			content: this.transformContent(m.content, m.role, variables, template),
 			context: { ...this.transformContext(m.context), sequence: messages.indexOf(m), sequenceId },
 		}));
 		const runOperation = async () => {

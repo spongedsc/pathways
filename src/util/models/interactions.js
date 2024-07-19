@@ -1,6 +1,7 @@
 import { fetch } from "undici";
 import { events, instructionSets } from "./constants.js";
 import { WorkersAI } from "./index.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 
 export class InteractionHistory {
 	constructor(
@@ -213,6 +214,7 @@ export class InteractionResponse {
 	 */
 
 	formatOutputMessage(content, allEvents = []) {
+		if (!content) return "";
 		const bannerArr = allEvents
 			.map((event) => {
 				const eventData = events[event?.type];
@@ -224,7 +226,7 @@ export class InteractionResponse {
 
 		const banner = allEvents.length > 0 ? bannerArr.join("\n\n") : "";
 
-		return banner + "\n" + content.trim();
+		return banner + "\n" + content?.trim();
 	}
 
 	currentTemporalISO() {
@@ -326,10 +328,12 @@ export class InteractionMessageEvent {
 		const modelCall = await this.response.workersAI
 			.callModel({
 				input: {
-					messages: history.map((e) => ({
-						role: e.role,
-						content: e.content,
-					})),
+					messages: history
+						.map((e) => ({
+							role: e.role,
+							content: e.content,
+						}))
+						.filter((e) => e.role !== "tool"),
 				},
 				maxTokens: 512,
 			})
@@ -344,9 +348,9 @@ export class InteractionMessageEvent {
 		await this.history
 			.add(
 				{
-					key: this.message?.channel?.id,
+					key: "unified-" + this.message?.channel?.id,
 					role: "assistant",
-					content: this.response.formatAssistantMessage(textResponse?.length === 0 ? "[no response]" : textResponse),
+					content: this.response?.formatAssistantMessage(textResponse || "[no response]"),
 					respondingTo: this.message?.id,
 				},
 				true,
@@ -371,11 +375,12 @@ export class InteractionMessageEvent {
 		await this.history
 			.add(
 				{
-					key: this.message?.channel?.id,
+					key: "unified-" + this.message?.channel?.id,
 					role: "assistant",
 					content: this.response.formatAssistantMessage(`\n${genData.trim()}`, "imagine"),
 					contextId: this.message?.id,
 					respondingTo: this.message?.id,
+					timestamp: Temporal.Now.plainDateTimeISO(this?.tz || "Etc/UTC").toString(),
 					model: "@cf/lykon/dreamshaper-8-lcm",
 				},
 				true,
@@ -412,7 +417,7 @@ export class InteractionMessageEvent {
 	}
 
 	async createResponse(
-		{ textResponse, conditions } = {
+		{ textResponse: tr, conditions } = {
 			conditions: {
 				amnesia: false,
 				imagine: false,
@@ -429,17 +434,46 @@ export class InteractionMessageEvent {
 				};
 			});
 
+		let textResponse = tr;
+		let components = [];
+
+		if (this.message?.moderated === true) {
+			textResponse =
+				tr +
+				"\n-# Your message was moderated as it contained content that did not follow the inference provider's guidelines.";
+
+			if (
+				this?.message?.moderationTags?.includes("self-harm") ||
+				this?.message?.moderationTags?.includes("self-harm/intent")
+			) {
+				components.push(
+					new ActionRowBuilder().addComponents(
+						new ButtonBuilder()
+							.setStyle(ButtonStyle.Link)
+							.setURL("https://afsp.org/suicide-prevention-resources/")
+							.setLabel("S/H prevention resources")
+							.setDisabled(false),
+					),
+				);
+			}
+		} else {
+			if (this.message?.wasSleeping === true) textResponse = tr + "\n-# I was sleeping!! Ugh..";
+
+			textResponse = textResponse.trim();
+		}
+
 		const text = this.response.formatOutputMessage(textResponse, events);
-		const content = textResponse.length >= 2000 ? "" : text;
-		const files = textResponse.length >= 2000 ? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }] : [];
+		const content = textResponse?.length >= 2000 ? "" : text;
+		const files = textResponse?.length >= 2000 ? [{ attachment: Buffer.from(text, "utf-8"), name: "response.md" }] : [];
 
 		const responseMsg = await this.message
 			?.reply({
 				content,
 				files,
+				components: components || [],
 				failIfNotExists: true,
 			})
-			.catch(() => message.react("❌").catch(() => false));
+			.catch(() => this.message.react("❌").catch(() => false));
 
 		return {
 			responseMsg,

@@ -4,8 +4,10 @@ import chalk from "chalk";
 /** @type {import('./index.js').Command} */
 export default {
 	data: new SlashCommandBuilder()
-		.setName("ducttape")
-		.setDescription("STFU! Enable/disable passive response features until the next k/V wipe.")
+		.setName("sleep")
+		.setDescription(
+			"Night night, time to sleep! Enable/disable passive response features until the the bot is woken up.",
+		)
 		.addBooleanOption((o) =>
 			o.setName("enabled").setDescription("Map to => client.tempStore#silentMode").setRequired(true),
 		)
@@ -20,7 +22,7 @@ export default {
 			.catch(() => false);
 
 		await interaction.editReply({
-			content: `**${toOption ? "Enabled" : "Disabled"}** silent mode. ${!toOption ? "" : "Passive response features are now disabled until the k/V is wiped, or until silent mode is disabled. (Pinging the bot will always result in a response.)"}`,
+			content: `**${toOption ? "Enabled" : "Disabled"}** silent mode. ${!toOption ? "" : "Passive response features are now disabled until the k/V is wiped, or until silent mode is disabled. (Pinging the bot will always wake it up again.)"}`,
 		});
 
 		console.log(

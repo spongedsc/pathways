@@ -50,6 +50,10 @@ export default {
 			`${chalk.bold.green("AI")} Callsystem is ${chalk.bold(callsystem)} with version ${chalk.bold(CallsystemClass.version)}`,
 		);
 
+		if (callsystem === "cs.spongedsc.integrations") {
+			console.log(`${chalk.bold.green("AI")} ${chalk.bold(client.integrationsMap.size)} integrations loaded`);
+		}
+
 		console.log(
 			`${chalk.bold.green("Core")} acting as ${chalk.bold(client.user.tag)} (${Temporal.Now.instant().toLocaleString("en-GB", { timeZone: "Etc/UTC", timeZoneName: "short" })})`,
 		);
