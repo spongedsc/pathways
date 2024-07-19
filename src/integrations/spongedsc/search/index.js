@@ -4,6 +4,7 @@ import wiki from "wikipedia";
 import { tool } from "ai";
 import dedent from "dedent";
 import { NodeHtmlMarkdown } from "node-html-markdown";
+import { Caller } from "../../../callsystems/spongedsc/integrations/models/openai.js";
 export default class HelloWorld extends Integration {
 	constructor(opts) {
 		const { env, message, client, std, provider } = opts || {};
@@ -26,11 +27,12 @@ export default class HelloWorld extends Integration {
 		return {
 			type: "function",
 			function: tool({
-				name: "wikipedia",
+				name: "search",
 				description:
-					"Get information about a topic from Wikipedia. Trigger this integration when a user asks you to look up something on Wikipedia.",
+					"Get information about a topic. Trigger this integration when a user asks you to look up something on Wikipedia.",
 				parameters: z.object({
-					topic: z.string().describe("The topic to look up on Wikipedia."),
+					topic: z.string().describe("The topic to look up."),
+					question: z.string().describe("Describe or ask what you want to know."),
 					full: z
 						.boolean()
 						.describe(
@@ -47,12 +49,7 @@ export default class HelloWorld extends Integration {
 		return new Date("2024-07-18");
 	}
 
-	/**
-	 * This function is called when the integration is activated by the Integrations callsystem.
-	 * @param {object[]} arguments The arguments passed to the integration.
-	 * @returns {Promise<IntegrationResponse>} The response to the activation request.
-	 */
-	async activate({ arguments: args }) {
+	async wikipedia(args) {
 		const { env, message, client } = this;
 
 		const search = await wiki
@@ -98,5 +95,67 @@ export default class HelloWorld extends Integration {
 				buttonText: `Wikipedia (${args.full ? "full" : "summary"}): ${args.topic}`.slice(0, 50),
 			},
 		};
+	}
+
+	async perplexity(args) {
+		const { env, message, client } = this;
+
+		const caller = new Caller({
+			key: env.OPENROUTER_ACCOUNT_TOKEN,
+			apiUrl: "https://openrouter.ai/api/v1",
+		});
+
+		const search = await caller
+			.call({
+				model: "perplexity/llama-3-sonar-small-32k-online",
+				messages: [
+					{
+						role: "system",
+						content: "This is the topic that the user is looking for: " + args.topic,
+					},
+					{
+						role: "user",
+						content: args.question,
+					},
+				],
+			})
+			.then((r) => r.text)
+			.catch((e) => {
+				return false;
+			});
+
+		if (search === false) return await this.wikipedia(args);
+
+		return {
+			success: true,
+			messages: [
+				{
+					role: "tool",
+					content: dedent`
+                    Perplexity returned the following result:
+                    ${search}
+                    `,
+				},
+			],
+			data: {
+				buttonUrl: "https://perplexity.ai/search?q=" + args.topic.replaceAll(" ", "%20"),
+				buttonText: `Perplexity: ${args.question}`.slice(0, 50),
+			},
+		};
+	}
+
+	/**
+	 * This function is called when the integration is activated by the Integrations callsystem.
+	 * @param {object[]} arguments The arguments passed to the integration.
+	 * @returns {Promise<IntegrationResponse>} The response to the activation request.
+	 */
+	async activate({ arguments: args }) {
+		const { env, message, client } = this;
+
+		if (!args.question || env.GM_PERPLEXITY === "true") {
+			return await this.perplexity(args);
+		} else {
+			return await this.wikipedia(args);
+		}
 	}
 }
