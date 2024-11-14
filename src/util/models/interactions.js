@@ -152,9 +152,22 @@ export class InteractionResponse {
 
 		if (callToModel === null) return null;
 
-		const buffer = Buffer.from(callToModel);
+		try {
+			// Try to parse as JSON first
+			const textDecoder = new TextDecoder();
+			const text = textDecoder.decode(callToModel);
+			const jsonResponse = JSON.parse(text);
 
-		return buffer;
+			// If we have JSON with base64 image
+			if (jsonResponse?.result?.image) {
+				return Buffer.from(jsonResponse.result.image, "base64");
+			}
+		} catch (e) {
+			// Not JSON, treat as binary image data
+		}
+
+		// Return original buffer if not JSON or JSON parsing failed
+		return Buffer.from(callToModel);
 	}
 
 	async formatUserMessage() {
