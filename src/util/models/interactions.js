@@ -137,7 +137,7 @@ export class InteractionResponse {
 		const callToModel = await this.workersAI
 			.callModel(
 				{
-					model: "@cf/lykon/dreamshaper-8-lcm",
+					model: "@cf/black-forest-labs/flux-1-schnell",
 					input: {
 						prompt: data,
 					},
@@ -376,7 +376,7 @@ export class InteractionMessageEvent {
 					content: this.response.formatAssistantMessage(`\n${genData.trim()}`, "imagine"),
 					contextId: this.message?.id,
 					respondingTo: this.message?.id,
-					model: "@cf/lykon/dreamshaper-8-lcm",
+					model: "@cf/black-forest-labs/flux-1-schnell",
 				},
 				true,
 			)

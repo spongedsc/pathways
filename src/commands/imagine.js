@@ -12,6 +12,10 @@ export default {
 				.setDescription("Enter a description of what you're generating.")
 				.setChoices([
 					{
+						name: "black-forest-labs/flux-1-schnell",
+						value: "@cf/black-forest-labs/flux-1-schnell",
+					},
+					{
 						name: "lykon/dreamshaper-8-lcm",
 						value: "@cf/lykon/dreamshaper-8-lcm",
 					},
