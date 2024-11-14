@@ -23,6 +23,10 @@ export default {
 						name: "stabilityai/stable-diffusion-xl-base-1.0",
 						value: "@cf/stabilityai/stable-diffusion-xl-base-1.0",
 					},
+					{
+						name: "black-forest-labs/flux-1-schnell",
+						value: "@cf/black-forest-labs/flux-1-schnell",
+					},
 				])
 				.setRequired(true),
 		)
@@ -66,7 +70,41 @@ export default {
 				content: `The model did not generate an image.`,
 			});
 
-		const buffer = Buffer.from(callToModel);
+		let buffer = null;
+
+		try {
+			const textDecoder = new TextDecoder();
+			const text = textDecoder.decode(callToModel);
+			const jsonResponse = JSON.parse(text);
+
+			if (jsonResponse?.success === false) {
+				if (jsonResponse?.errors?.find((e) => e?.code === 3030)) {
+					return await interaction.editReply({
+						content: `❌ The model rejected your prompt because it contained a disallowed token (NSFW content). Please try again with a different prompt.`,
+					});
+				} else {
+					return await interaction.editReply({
+						content: `The model could not generate an image. Attached is a log of the error.`,
+						files: [
+							{
+								attachment: Buffer.from(callToModel, "utf-8"),
+								name: "error.txt",
+							},
+						],
+					});
+				}
+			}
+
+			if (jsonResponse?.result?.image) {
+				buffer = Buffer.from(jsonResponse.result.image, "base64");
+			} else {
+				buffer = Buffer.from(callToModel);
+			}
+		} catch (e) {
+			buffer = Buffer.from(callToModel);
+		}
+
+		if (buffer === null) buffer = Buffer.from(callToModel);
 
 		await interaction.editReply({
 			content: `\`${prompt}\`\n*generated with \`${model}\`*`,
